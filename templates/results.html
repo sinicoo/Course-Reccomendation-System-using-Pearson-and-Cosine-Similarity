@@ -65,13 +65,7 @@
                 {% endfor %}
             </ul>
         </div>
-
-        <div class="metrics">
-            <h2>Model Evaluation Metrics</h2>
-            <p>RMSE: {{ rmse }}</p>
-            <p>MAE: {{ mae }}</p>
-        </div>
-
+        
         <div class="matrix">
             <h2>Similarity Matrix</h2>
             {% for sheet_name, matrix in similarity_matrix.items() %}
