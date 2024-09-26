@@ -10,3 +10,4 @@ scipy==1.13.0
 gunicorn
 pearsonr
 DBSCAN
+openpyxl
