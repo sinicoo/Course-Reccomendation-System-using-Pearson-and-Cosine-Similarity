@@ -4,8 +4,9 @@ import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.decomposition import TruncatedSVD
 from sklearn.impute import KNNImputer
-from sklearn.metrics import mean_squared_error, mean_absolute_error
 from scipy.stats import pearsonr
+from sklearn.cluster import DBSCAN
+from sklearn.metrics import silhouette_score, mean_squared_error, mean_absolute_error
 
 app = Flask(__name__)
 
@@ -54,6 +55,28 @@ def combined_similarity_with_percentiles(user_df, df, available_subjects, percen
 
     return combined_sim.flatten() / (len(available_subjects) + 1)
 
+def mean_average_precision(y_true, y_pred, k=50):
+    score = 0.0
+    num_hits = 0.0
+
+    for i, p in enumerate(y_pred[:k]):
+        if y_true[i] == 1:
+            num_hits += 1.0
+            score += num_hits / (i + 1.0)
+
+    return score / min(len(y_true), k)
+
+def cluster_courses(df, available_subjects):
+    clustering = DBSCAN(eps=0.5, min_samples=5).fit(df[available_subjects])
+    df['Cluster'] = clustering.labels_
+
+    # Calculate silhouette score
+    if len(set(clustering.labels_)) > 1:  # Silhouette Score requires more than 1 cluster
+        score = silhouette_score(df[available_subjects], clustering.labels_)
+    else:
+        score = -1  # Cannot calculate Silhouette Score if all points fall into a single cluster
+    return df, score
+
 def impute_missing_values(df, available_subjects):
     imputer = KNNImputer(n_neighbors=5)
     df[available_subjects] = imputer.fit_transform(df[available_subjects])
@@ -69,6 +92,9 @@ def index():
         for subject in subjects:
             user_score = request.form.get(subject)
             user_input[subject] = float(user_score) if user_score else np.nan
+            
+        if any(score > 100 for score in user_input.values() if score is not None):
+            return render_template('index.html', error="Scores cannot exceed 100.")    
 
         user_df = pd.DataFrame([user_input])
         combined_similarity_scores = []
@@ -80,12 +106,15 @@ def index():
             available_subjects = [subject for subject in subjects if subject in df.columns]
             df = impute_missing_values(df, available_subjects)
 
+            # Move clustering here, so df is defined
+            df, silhouette = cluster_courses(df, available_subjects)
+
             percentiles_df = compute_subject_percentiles(df, available_subjects)
             cosine_sim = combined_similarity_with_percentiles(user_df, df, available_subjects, percentiles_df)
 
             # Now compute Pearson similarity
             pearson_sim = compute_pearson_similarity(user_df, df, available_subjects)
-            
+
             # Combine cosine and Pearson (average them)
             combined_sim = (cosine_sim + pearson_sim) / 2
 
@@ -127,8 +156,10 @@ def index():
         mae = mean_absolute_error(y_true, y_pred)
 
         return render_template('results.html', user_input=user_input, recommendations=recommended_courses, 
-                            rmse=rmse, mae=mae, 
-                            similarity_matrix=similarity_matrix)
+                    rmse=rmse, mae=mae, 
+                    silhouette_score=silhouette, 
+                    similarity_matrix=similarity_matrix)
+
 
     return render_template('index.html')
 
