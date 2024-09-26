@@ -7,7 +7,6 @@ python-dateutil==2.9.0.post0
 scikit-learn==1.4.2
 scikit-surprise==1.1.4
 scipy==1.13.0
-sklearn.metrics
 gunicorn
 pearsonr
 DBSCAN
