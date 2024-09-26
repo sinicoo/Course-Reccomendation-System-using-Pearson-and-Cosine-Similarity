@@ -75,6 +75,7 @@
         </div>
     </header>
     <div class="container">
+        
         <form method="post">
             <h2>Enter Your Scores</h2>
             <div class="form-group">
@@ -105,11 +106,16 @@
                 <label for="Clerical">Clerical:</label>
                 <input type="number" id="Clerical" name="Clerical" step="0.01">
             </div>
+            {% if error %}
+            <div style="color: red;">
+                <strong>{{ error }}</strong>
+            </div>
+        {% endif %}
             <button type="submit">Submit</button>
         </form>
     </div>
     <footer class="footer">
-        <p>&copy; 2024 Apptitude Test. All rights reserved.</p>
+        <p>&copy; 2024 Course Recommendation</p>
     </footer>
 </body>
 </html>
