@@ -43,28 +43,21 @@ def compute_subject_percentiles(df, available_subjects):
 def combined_similarity_with_percentiles(user_df, df, available_subjects, percentiles_df):
     user_vector = user_df[available_subjects].fillna(0).values
     svd_matrix = apply_svd(df, available_subjects)
-    cosine_sim = cosine_similarity(user_vector, svd_matrix)
+    cosine_sim = cosine_similarity(user_vector.reshape(1, -1), svd_matrix).flatten()  # Fix reshape
+    
+    combined_sim = cosine_sim.copy()
+    subject_contributions = {}
 
-    combined_sim = cosine_sim.flatten()
     for subject in available_subjects:
         user_score = user_df[subject].values[0]
         subject_percentiles = percentiles_df[subject].values
         subject_weights = subject_percentiles / 100
-
         combined_sim += (user_score * subject_weights)
 
-    return combined_sim.flatten() / (len(available_subjects) + 1)
+        subject_contributions[subject] = subject_percentiles
 
-def mean_average_precision(y_true, y_pred, k=50):
-    score = 0.0
-    num_hits = 0.0
-
-    for i, p in enumerate(y_pred[:k]):
-        if y_true[i] == 1:
-            num_hits += 1.0
-            score += num_hits / (i + 1.0)
-
-    return score / min(len(y_true), k)
+    combined_sim /= (len(available_subjects) + 1)  # Normalize with number of subjects
+    return combined_sim.flatten(), subject_contributions
 
 def cluster_courses(df, available_subjects):
     clustering = DBSCAN(eps=0.5, min_samples=5).fit(df[available_subjects])
@@ -87,6 +80,7 @@ def index():
     user_input = {}
     recommendations = []
     similarity_matrix = {}
+    subject_contributions_all = {}  # Store percentiles for each recommendation
 
     if request.method == 'POST':
         for subject in subjects:
@@ -110,7 +104,7 @@ def index():
             df, silhouette = cluster_courses(df, available_subjects)
 
             percentiles_df = compute_subject_percentiles(df, available_subjects)
-            cosine_sim = combined_similarity_with_percentiles(user_df, df, available_subjects, percentiles_df)
+            cosine_sim, subject_contributions = combined_similarity_with_percentiles(user_df, df, available_subjects, percentiles_df)
 
             # Now compute Pearson similarity
             pearson_sim = compute_pearson_similarity(user_df, df, available_subjects)
@@ -122,6 +116,10 @@ def index():
             combined_similarity_scores.append(similarity_df)
             combined_indices.append(df.index)
             similarity_matrix[sheet_name] = similarity_df
+
+            # Store subject percentiles for each recommendation
+            for idx, sim in similarity_df.iterrows():
+                subject_contributions_all[idx] = subject_contributions
 
         final_similarity_df = pd.concat(combined_similarity_scores, axis=0)
         sorted_similarity_df = final_similarity_df.sort_values(by='Similarity', ascending=False)
@@ -140,10 +138,19 @@ def index():
                     course_name = df.loc[i, 'Course Applied'] if 'Course Applied' in df.columns else f"Course {i}"
                     if course_name not in unique_courses:
                         unique_courses.add(course_name)
-                        recommended_courses.append(course_name)
-                    break  
+                        clustered_score = df.loc[i, available_subjects].mean() 
 
-        threshold = 0.5  # Adjust based on your needs
+                        recommended_courses.append({
+                            'course_name': course_name,
+                            'percentiles': subject_contributions_all[i],
+                            'clustered_score': clustered_score,  # Include clustered score
+                        })
+                    break
+
+        # Sort recommended courses by clustered score in descending order
+        recommended_courses.sort(key=lambda x: x['clustered_score'], reverse=True)
+
+        threshold = 0.5
 
         y_pred = [1 if score >= threshold else 0 for score in sorted_similarity_df['Similarity']]
 
@@ -155,10 +162,11 @@ def index():
         rmse = mean_squared_error(y_true, y_pred, squared=False)
         mae = mean_absolute_error(y_true, y_pred)
 
-        return render_template('results.html', user_input=user_input, recommendations=recommended_courses, 
-                    rmse=rmse, mae=mae, 
-                    silhouette_score=silhouette, 
-                    similarity_matrix=similarity_matrix)
+        return render_template('results.html', user_input=user_input, 
+                        recommendations=recommended_courses, 
+                        rmse=rmse, mae=mae, 
+                        silhouette_score=silhouette, 
+                        similarity_matrix=similarity_matrix)
 
 
     return render_template('index.html')

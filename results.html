@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Results</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        .recommendations {
+            margin-top: 20px;
+        }
+        .recommendations ul {
+            list-style: none;
+            padding: 0;
+        }
+        .recommendations li {
+            background: #e0e0e0;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .metrics {
+            margin-top: 20px;
+        }
+        .matrix {
+            margin-top: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Recommended Courses</h1>
+        <div class="recommendations">
+    <ul>
+        {% for course in recommendations %}
+            <li>
+                <h3>{{ course.course_name }}</h3>
+                <p><strong>Clustered Score:</strong> {{ course.clustered_score }}</p>
+                <!--<h4>Subject Percentiles:</h4>
+                <ul>
+                    {% for subject, percentile in course.percentiles.items() %}
+                        <li>{{ subject }}: {{ percentile }} percentile</li>
+                    {% endfor %}
+                </ul>-->
+            </li>
+        {% endfor %}
+    </ul>
+</div>
+
+
+
+        <!-- <h2>Metrics</h2> -->
+        <!-- <p><strong>RMSE:</strong> {{ rmse }}</p> -->
+        <!-- <p><strong>MAE:</strong> {{ mae }}</p> -->
+
+        <div class="matrix">
+            <h3>Similarity Matrix</h3>
+            {% for sheet_name, matrix in similarity_matrix.items() %}
+                <h3>{{ sheet_name }}</h3>
+                <table>
+                    <tr>
+                        <th>Student</th>
+                        <th>Similarity</th>
+                    </tr>
+                    {% for row_index, row in matrix.iterrows() %}
+                        <tr>
+                            <td>{{ row_index + 1 }}</td> 
+                            <td>{{ row.Similarity }}</td>
+                        </tr>
+                    {% endfor %}
+                </table>
+            {% endfor %}
+        </div>
+        
+        
+        
+    </div>
+</body>
+</html>
