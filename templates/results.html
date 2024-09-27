@@ -59,31 +59,49 @@
     <div class="container">
         <h1>Recommended Courses</h1>
         <div class="recommendations">
-            <ul>
-                {% for course in recommendations %}
-                    <li>{{ course }}</li>
-                {% endfor %}
-            </ul>
-        </div>
-        
+    <ul>
+        {% for course in recommendations %}
+            <li>
+                <h3>{{ course.course_name }}</h3>
+                <p><strong>Clustered Score:</strong> {{ course.clustered_score }}</p>
+                <!--<h4>Subject Percentiles:</h4>
+                <ul>
+                    {% for subject, percentile in course.percentiles.items() %}
+                        <li>{{ subject }}: {{ percentile }} percentile</li>
+                    {% endfor %}
+                </ul>-->
+            </li>
+        {% endfor %}
+    </ul>
+</div>
+
+
+
+        <!-- <h2>Metrics</h2> -->
+        <!-- <p><strong>RMSE:</strong> {{ rmse }}</p> -->
+        <!-- <p><strong>MAE:</strong> {{ mae }}</p> -->
+
         <div class="matrix">
-            <h2>Similarity Matrix</h2>
+            <h3>Similarity Matrix</h3>
             {% for sheet_name, matrix in similarity_matrix.items() %}
                 <h3>{{ sheet_name }}</h3>
                 <table>
                     <tr>
-                        <th>Index</th>
+                        <th>Student</th>
                         <th>Similarity</th>
                     </tr>
-                    {% for index, row in matrix.iterrows() %}
+                    {% for row_index, row in matrix.iterrows() %}
                         <tr>
-                            <td>{{ index }}</td>
+                            <td>{{ row_index + 1 }}</td> 
                             <td>{{ row.Similarity }}</td>
                         </tr>
                     {% endfor %}
                 </table>
             {% endfor %}
         </div>
+        
+        
+        
     </div>
 </body>
 </html>
