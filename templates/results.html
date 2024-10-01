@@ -60,7 +60,7 @@
         <h1>Recommended Courses</h1>
         <div class="recommendations">
     <ul>
-        {% for course in recommendations %}
+        {% for course in recommendations[:3]%}
             <li>
                 <h3>{{ course.course_name }}</h3>
                 <!--<p><strong>Clustered Score:</strong> {{ course.clustered_score }}</p>
