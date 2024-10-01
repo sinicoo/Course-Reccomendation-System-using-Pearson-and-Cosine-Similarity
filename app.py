@@ -43,21 +43,9 @@ def compute_subject_percentiles(df, available_subjects):
 def combined_similarity_with_percentiles(user_df, df, available_subjects, percentiles_df):
     user_vector = user_df[available_subjects].fillna(0).values
     svd_matrix = apply_svd(df, available_subjects)
-    cosine_sim = cosine_similarity(user_vector.reshape(1, -1), svd_matrix).flatten()  # Fix reshape
+    cosine_sim = cosine_similarity(user_vector.reshape(1, -1), svd_matrix).flatten()
     
-    combined_sim = cosine_sim.copy()
-    subject_contributions = {}
-
-    for subject in available_subjects:
-        user_score = user_df[subject].values[0]
-        subject_percentiles = percentiles_df[subject].values
-        subject_weights = subject_percentiles / 100
-        combined_sim += (user_score * subject_weights)
-
-        subject_contributions[subject] = subject_percentiles
-
-    combined_sim /= (len(available_subjects) + 1)  # Normalize with number of subjects
-    return combined_sim.flatten(), subject_contributions
+    return cosine_sim, {}
 
 def cluster_courses(df, available_subjects):
     clustering = DBSCAN(eps=0.5, min_samples=5).fit(df[available_subjects])
@@ -74,6 +62,7 @@ def impute_missing_values(df, available_subjects):
     imputer = KNNImputer(n_neighbors=5)
     df[available_subjects] = imputer.fit_transform(df[available_subjects])
     return df
+
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -112,7 +101,13 @@ def index():
             # Combine cosine and Pearson (average them)
             combined_sim = (cosine_sim + pearson_sim) / 2
 
-            similarity_df = pd.DataFrame({'Similarity': combined_sim}, index=df.index)
+            # **Store all similarities in the DataFrame**
+            similarity_df = pd.DataFrame({
+                'Cosine Similarity': cosine_sim,
+                'Pearson Similarity': pearson_sim,
+                'Combined Similarity': combined_sim
+            }, index=df.index)
+
             combined_similarity_scores.append(similarity_df)
             combined_indices.append(df.index)
             similarity_matrix[sheet_name] = similarity_df
@@ -122,7 +117,7 @@ def index():
                 subject_contributions_all[idx] = subject_contributions
 
         final_similarity_df = pd.concat(combined_similarity_scores, axis=0)
-        sorted_similarity_df = final_similarity_df.sort_values(by='Similarity', ascending=False)
+        sorted_similarity_df = final_similarity_df.sort_values(by='Combined Similarity', ascending=False)
 
         # Generate y_true and y_pred based on sorted indices
         top_indices = sorted_similarity_df.index[:6]
@@ -152,7 +147,7 @@ def index():
 
         threshold = 0.5
 
-        y_pred = [1 if score >= threshold else 0 for score in sorted_similarity_df['Similarity']]
+        y_pred = [1 if score >= threshold else 0 for score in sorted_similarity_df['Combined Similarity']]
 
         min_length = min(len(y_true), len(y_pred))
         y_true = y_true[:min_length]
@@ -168,9 +163,7 @@ def index():
                         silhouette_score=silhouette, 
                         similarity_matrix=similarity_matrix)
 
-
     return render_template('index.html')
-
 
 if __name__ == '__main__':
     app.run(debug=True)
