@@ -13,3 +13,4 @@ DBSCAN
 openpyxl
 flask_mysqldb
 psycopg2
+matplotlib
