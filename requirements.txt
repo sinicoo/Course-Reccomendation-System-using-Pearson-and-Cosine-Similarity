@@ -11,3 +11,4 @@ gunicorn
 pearsonr
 DBSCAN
 openpyxl
+flask_mysqldb
