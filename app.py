@@ -13,10 +13,10 @@ from sklearn.metrics import silhouette_score
 app = Flask(__name__)
 
 # PostgreSQL configurations
-app.config['POSTGRES_HOST'] = 'localhost'
+app.config['POSTGRES_HOST'] = 'dpg-cs7p98rv2p9s73f7et7g-a.oregon-postgres.render.com'
 app.config['POSTGRES_USER'] = 'admin'
 app.config['POSTGRES_PASSWORD'] = '12345'
-app.config['POSTGRES_DB'] = 'flask_db'
+app.config['POSTGRES_DB'] = 'flaskdb_kspp'
 
 subjects = [
     'Verbal Language', 'Reading Comprehension', 'English', 'Math', 
