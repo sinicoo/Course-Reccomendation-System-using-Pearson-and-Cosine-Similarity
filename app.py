@@ -175,7 +175,7 @@ def results():
     x = np.arange(len(labels))
     width = 0.35
     ax.bar(x - width/2, student_scores, width, label='User')
-    ax.bar(x + width/2, avg_scores, width, label='Dataset Avg')
+    ax.bar(x + width/2 - 5, avg_scores, width, label='Dataset Avg')
     ax.set_xlabel('Subjects')
     ax.set_ylabel('Scores')
     ax.set_title('Comparison of User Scores with Dataset Average')
