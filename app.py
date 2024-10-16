@@ -74,10 +74,18 @@ def index():
     if request.method == 'POST':
         for subject in subjects:
             user_score = request.form.get(subject)
-            user_input[subject] = float(user_score) if user_score else np.nan
             
-        if any(score > 100 for score in user_input.values() if score is not None):
-            return render_template('index.html', error="Scores cannot exceed 100.")    
+            # Check if the score is within the valid range (0 to 100) and is not negative
+            if user_score:
+                try:
+                    user_score = float(user_score)
+                    if user_score < 0 or user_score > 100:
+                        return render_template('index.html', error=f"{subject} score must be between 0 and 100.")
+                except ValueError:
+                    return render_template('index.html', error=f"{subject} score must be a number.")
+                user_input[subject] = user_score
+            else:
+                user_input[subject] = np.nan
 
         user_df = pd.DataFrame([user_input])
         combined_similarity_scores = []
@@ -164,6 +172,7 @@ def index():
                         similarity_matrix=similarity_matrix)
 
     return render_template('index.html')
+
 
 if __name__ == '__main__':
     app.run(debug=True)
