@@ -59,23 +59,21 @@
     <div class="container">
         <h1>Recommended Courses</h1>
         <div class="recommendations">
-    <ul>
-        {% for course in recommendations[:3]%}
-            <li>
-                <h3>{{ course.course_name }}</h3>
-                <!--<p><strong>Clustered Score:</strong> {{ course.clustered_score }}</p>
-                <h4>Subject Percentiles:</h4>
-                <ul>
-                    {% for subject, percentile in course.percentiles.items() %}
-                        <li>{{ subject }}: {{ percentile }} percentile</li>
-                    {% endfor %}
-                </ul>-->
-            </li>
-        {% endfor %}
-    </ul>
-</div>
-
-
+            <ul>
+                {% for course in recommendations[:3] %}
+                    <li>
+                        <h3>{{ loop.index }}. {{ course.course_name }}</h3>
+                        <!--<p><strong>Clustered Score:</strong> {{ course.clustered_score }}</p>
+                        <h4>Subject Percentiles:</h4>
+                        <ul>
+                            {% for subject, percentile in course.percentiles.items() %}
+                                <li>{{ subject }}: {{ percentile }} percentile</li>
+                            {% endfor %}
+                        </ul>-->
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
 
         <!-- <h2>Metrics</h2> -->
         <!-- <p><strong>RMSE:</strong> {{ rmse }}</p> -->
