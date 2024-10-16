@@ -72,8 +72,9 @@
                 <strong>{{ loop.index }}.</strong> {{ course['course_name'] }}
             </li>
         {% endfor %}
-    </ul>
-
+        </ul>
+    <h2>Comparison of Scores</h2>
+    <img src="data:image/png;base64,{{ chart_url }}" alt="Comparison Chart">
     <a href="{{ url_for('index') }}">Back to Home</a>
     <script>
         const studentScores = {{ student_scores | tojson }};
