@@ -1,9 +1,9 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>  
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Apptitude Test</title>
+    <title>Aptitude Test</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -40,7 +40,7 @@
             margin-bottom: 5px;
             font-weight: bold;
         }
-        input[type="text"], input[type="number"], input[type="file"] {
+        input[type="text"], input[type="number"], input[type="file"], select {
             width: 100%;
             padding: 10px;
             border: 1px solid #ddd;
@@ -71,7 +71,7 @@
 <body>
     <header>
         <div class="container">
-            <h1>Apptitude Test</h1>
+            <h1>Aptitude Test</h1>
         </div>
     </header>
     <div class="container">
@@ -81,6 +81,26 @@
                 <label for="file">Choose Excel file (.xlsx):</label>
                 <input type="file" id="file" name="file" accept=".xlsx">
             </div>
+            
+            <h2>Personal Information</h2>
+            <div class="form-group">
+                <label for="name">Name:</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+            <div class="form-group">
+                <label for="age">Age:</label>
+                <input type="number" id="age" name="age" required>
+            </div>
+            <div class="form-group">
+                <label for="gender">Gender:</label>
+                <select id="gender" name="gender" required>
+                    <option value="">Select Gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+
             <h2>Enter Your Scores</h2>
             <div class="form-group">
                 <label for="Verbal Language">Verbal Language:</label>
@@ -106,6 +126,7 @@
                 <label for="Basic Computer">Basic Computer:</label>
                 <input type="number" id="Basic Computer" name="Basic Computer" step="0.01">
             </div>
+
             {% if error %}
             <div style="color: red;">
                 <strong>{{ error }}</strong>
@@ -115,7 +136,7 @@
         </form>
     </div>
     <footer class="footer">
-        <p>&copy; 2024 Apptitude Test. All rights reserved.</p>
+        <p>&copy; 2024 Aptitude Test. All rights reserved.</p>
     </footer>
 </body>
 </html>
