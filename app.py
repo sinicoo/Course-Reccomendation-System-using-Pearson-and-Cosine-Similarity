@@ -172,21 +172,25 @@ def results():
     connection.close()
     fig, ax = plt.subplots()
     labels = ['Verbal Lang', 'Reading Comp', 'English', 'Math', 'Non Verbal', 'Basic Comp']
-    x = np.arange(len(labels))
-    width = 0.35
+    x = np.arange(len(labels))  # X-axis positions
+    width = 0.35  # Width of the bars
+    
     ax.bar(x - width/2, student_scores, width, label='User')
-    ax.bar(x + width/2 - 5, avg_scores, width, label='Dataset Avg')
+    ax.bar(x + width/2, avg_scores, width, label='Dataset Avg')
+    
     ax.set_xlabel('Subjects')
     ax.set_ylabel('Scores')
     ax.set_title('Comparison of User Scores with Dataset Average')
     ax.set_xticks(x)
     ax.set_xticklabels(labels)
     ax.legend()
+    
     buf = io.BytesIO()
     plt.savefig(buf, format='png')
     buf.seek(0)
     chart_url = base64.b64encode(buf.getvalue()).decode('utf8')
     buf.close()
+
     return render_template('results.html', courses=recommended_courses, student_scores=student_scores, avg_scores=list(avg_scores), chart_url=chart_url)
 
 if __name__ == '__main__':
