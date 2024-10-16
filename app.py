@@ -15,7 +15,7 @@ app = Flask(__name__)
 # PostgreSQL configurations
 app.config['POSTGRES_HOST'] = 'dpg-cs7p98rv2p9s73f7et7g-a.oregon-postgres.render.com'
 app.config['POSTGRES_USER'] = 'admin'
-app.config['POSTGRES_PASSWORD'] = '12345'
+app.config['POSTGRES_PASSWORD'] = 'AMw3AcY1JyczmVcOiWyRdSK1buiygRVJ'
 app.config['POSTGRES_DB'] = 'flaskdb_kspp'
 
 subjects = [
