@@ -12,3 +12,4 @@ pearsonr
 DBSCAN
 openpyxl
 flask_mysqldb
+psycopg2
