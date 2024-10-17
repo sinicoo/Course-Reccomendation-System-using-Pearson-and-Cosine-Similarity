@@ -75,6 +75,8 @@
         </ul>
     <h2>Comparison of Scores</h2>
     <img src="data:image/png;base64,{{ chart_url }}" alt="Comparison Chart">
+    <h2>Radar Chart:</h2>
+    <img src="data:image/png;base64,{{ radar_chart_url }}" alt="Radar Chart">
     <a href="{{ url_for('index') }}">Back to Home</a>
     <script>
         const studentScores = {{ student_scores | tojson }};
