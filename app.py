@@ -151,7 +151,7 @@ def index():
 def results():
     recommended_courses = []  # Initialize recommended courses
 
-    # Fetch the latest student’s data from the database
+    # Fetch latest student’s data from the database
     connection = get_db_connection()
     cursor = connection.cursor()
     cursor.execute("SELECT recommended_courses FROM students ORDER BY id DESC LIMIT 1")
@@ -167,8 +167,6 @@ def results():
     scores_result = cursor.fetchone()
     student_scores = list(scores_result) if scores_result else [0] * 6
 
-    print(f"User Scores: {student_scores}")
-
     # Load dataset from Excel for comparison
     dataset = pd.read_excel('dataset.xlsx', sheet_name=None)
     all_data = pd.concat(dataset.values(), ignore_index=True)
@@ -180,11 +178,6 @@ def results():
 
     # Calculate the average scores from the dataset
     avg_scores = available_data.mean().values if not available_data.empty else [0] * len(subjects)
-
-    print(f"Dataset Average Scores: {avg_scores}")
-
-    cursor.close()
-    connection.close()
 
     # Generate Bar Chart
     fig, ax = plt.subplots()
@@ -202,43 +195,47 @@ def results():
     ax.set_xticklabels(labels)
     ax.legend()
 
-    # Save Bar Chart to buffer
+    # Save Bar Chart to Buffer
     buf = io.BytesIO()
     plt.savefig(buf, format='png')
     buf.seek(0)
-    bar_chart_url = base64.b64encode(buf.getvalue()).decode('utf8')
+    chart_url = base64.b64encode(buf.getvalue()).decode('utf8')
     buf.close()
 
     # Generate Radar Chart
-    angles = np.linspace(0, 2 * np.pi, len(labels), endpoint=False).tolist()
-    student_scores += student_scores[:1]
-    avg_scores = list(avg_scores) + [avg_scores[0]]
+    fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})
+    angles = np.linspace(0, 2 * np.pi, len(subjects), endpoint=False).tolist()
+    student_scores += student_scores[:1]  # Closing the radar chart
+    avg_scores += avg_scores[:1]  # Closing the radar chart
     angles += angles[:1]
 
-    fig, ax = plt.subplots(figsize=(6, 6), subplot_kw=dict(polar=True))
     ax.plot(angles, student_scores, label='User', marker='o')
-    ax.plot(angles, avg_scores, label='Dataset Avg', marker='o')
     ax.fill(angles, student_scores, alpha=0.25)
+    ax.plot(angles, avg_scores, label='Dataset Avg', marker='o')
+    ax.fill(angles, avg_scores, alpha=0.25)
     ax.set_xticks(angles[:-1])
     ax.set_xticklabels(labels)
-    ax.legend(loc='upper right')
+    ax.legend(loc='upper right', bbox_to_anchor=(1.1, 1.1))
 
-    # Save Radar Chart to buffer
+    # Save Radar Chart to Buffer
     buf = io.BytesIO()
     plt.savefig(buf, format='png')
     buf.seek(0)
     radar_chart_url = base64.b64encode(buf.getvalue()).decode('utf8')
     buf.close()
 
-    # Render the results page with both charts
+    cursor.close()
+    connection.close()
+
     return render_template(
         'results.html',
-        bar_chart_url=bar_chart_url,
+        chart_url=chart_url,
         radar_chart_url=radar_chart_url,
         student_scores=student_scores,
         avg_scores=list(avg_scores),
         courses=recommended_courses
     )
+
 
 
 
