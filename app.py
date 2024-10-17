@@ -152,11 +152,7 @@ def results():
     connection = get_db_connection()
     cursor = connection.cursor()
 
-    # Fetch the latest student's scores and recommendations
-    cursor.execute("SELECT recommended_courses FROM students ORDER BY id DESC LIMIT 1")
-    result = cursor.fetchone()
-    recommended_courses = json.loads(result[0]) if result and result[0] else []
-
+    # Fetch the latest student's scores
     cursor.execute("""
         SELECT verbal_language, reading_comprehension, english, math, 
                non_verbal, basic_computer 
@@ -165,39 +161,34 @@ def results():
     scores_result = cursor.fetchone()
     student_scores = list(scores_result) if scores_result else []
 
-    # Fetch all students' scores for averaging
+    # Fetch all students except the latest one for averaging
     cursor.execute("""
         SELECT verbal_language, reading_comprehension, english, math, 
                non_verbal, basic_computer 
-        FROM students
+        FROM students 
+        WHERE id != (SELECT MAX(id) FROM students);
     """)
     all_scores = np.array(cursor.fetchall(), dtype=float)
 
-    # Calculate the average scores, handling NaN values
+    print(f"User Scores: {student_scores}")
+    print(f"All Scores: {all_scores}")  # Debugging step
+
+    # Calculate average scores, handling NaNs
     avg_scores = np.nanmean(all_scores, axis=0) if len(all_scores) > 0 else [0] * len(student_scores)
 
-    # Debug: Print scores to ensure correctness
-    print(f"User Scores: {student_scores}")
     print(f"Dataset Average Scores: {avg_scores}")
-
-    # Identify the most similar students
-    similarities = cosine_similarity([student_scores], all_scores)[0]
-    top_indices = np.argsort(similarities)[-3:][::-1]  # Get top 3 similar students
-
-    print(f"Top Similar Students Indices: {top_indices}")
-    print(f"Similar Students' Scores: {all_scores[top_indices]}")
 
     cursor.close()
     connection.close()
 
-    # Generate the comparison bar chart
+    # Generate the comparison chart
     fig, ax = plt.subplots()
-    labels = ['Verbal', 'Read Comp', 'English', 'Math', 'Non Verbal', 'Basic Comp']
+    labels = ['Verbal Lang', 'Reading Comp', 'English', 'Math', 'Non Verbal', 'Basic Comp']
     x = np.arange(len(labels))
     width = 0.35
 
-    ax.bar(x - width/2, student_scores, width, label='User')
-    ax.bar(x + width/2, avg_scores, width, label='Dataset Avg')
+    ax.bar(x - width/2, student_scores, width, label='User', alpha=0.7)
+    ax.bar(x + width/2, avg_scores, width, label='Dataset Avg', alpha=0.7)
 
     ax.set_xlabel('Subjects')
     ax.set_ylabel('Scores')
@@ -206,7 +197,7 @@ def results():
     ax.set_xticklabels(labels)
     ax.legend()
 
-    # Save the chart to a buffer
+    # Save chart to buffer
     buf = io.BytesIO()
     plt.savefig(buf, format='png')
     buf.seek(0)
@@ -215,11 +206,11 @@ def results():
 
     return render_template(
         'results.html', 
-        courses=recommended_courses, 
+        chart_url=chart_url, 
         student_scores=student_scores, 
-        avg_scores=list(avg_scores), 
-        chart_url=chart_url
+        avg_scores=list(avg_scores)
     )
+
 
 
 if __name__ == '__main__':
