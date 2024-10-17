@@ -203,37 +203,35 @@ def results():
     buf.close()
 
     # Generate Radar Chart
-    # Generate Radar Chart
-fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})
+    fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})
 
-# Create angles and ensure the data points loop back to the first point
-angles = np.linspace(0, 2 * np.pi, len(subjects), endpoint=False).tolist()
-angles += angles[:1]  # Closing the radar chart
+    # Create angles and ensure the data points loop back to the first point
+    angles = np.linspace(0, 2 * np.pi, len(subjects), endpoint=False).tolist()
+    angles += angles[:1]  # Closing the radar chart
 
-# Ensure scores are also closed (same first and last points)
-student_scores.append(student_scores[0])
-avg_scores.append(avg_scores[0])
+    # Ensure scores are also closed (same first and last points)
+    student_scores.append(student_scores[0])
+    avg_scores.append(avg_scores[0])
 
-# Plotting the radar chart
-ax.plot(angles, student_scores, label='User', marker='o')
-ax.fill(angles, student_scores, alpha=0.25)
+    # Plotting the radar chart
+    ax.plot(angles, student_scores, label='User', marker='o')
+    ax.fill(angles, student_scores, alpha=0.25)
 
-ax.plot(angles, avg_scores, label='Dataset Avg', marker='o')
-ax.fill(angles, avg_scores, alpha=0.25)
+    ax.plot(angles, avg_scores, label='Dataset Avg', marker='o')
+    ax.fill(angles, avg_scores, alpha=0.25)
 
-# Set the labels for each axis (subject)
-ax.set_xticks(angles[:-1])
-ax.set_xticklabels(subjects)
+    # Set the labels for each axis (subject)
+    ax.set_xticks(angles[:-1])
+    ax.set_xticklabels(subjects)
 
-ax.legend(loc='upper right', bbox_to_anchor=(1.1, 1.1))
+    ax.legend(loc='upper right', bbox_to_anchor=(1.1, 1.1))
 
-# Save Radar Chart to Buffer
-buf = io.BytesIO()
-plt.savefig(buf, format='png')
-buf.seek(0)
-radar_chart_url = base64.b64encode(buf.getvalue()).decode('utf8')
-buf.close()
-
+    # Save Radar Chart to Buffer
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png')
+    buf.seek(0)
+    radar_chart_url = base64.b64encode(buf.getvalue()).decode('utf8')
+    buf.close()
 
     cursor.close()
     connection.close()
@@ -246,10 +244,6 @@ buf.close()
         avg_scores=list(avg_scores),
         courses=recommended_courses
     )
-
-
-
-
 
 if __name__ == '__main__':
     app.run(debug=True)
