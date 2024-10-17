@@ -149,50 +149,51 @@ def index():
 
 @app.route('/results')
 def results():
+    recommended_courses = []  # Initialize recommended courses
+
+    # Fetch latest student’s data from the database
     connection = get_db_connection()
     cursor = connection.cursor()
+    cursor.execute("SELECT recommended_courses FROM students ORDER BY id DESC LIMIT 1")
+    result = cursor.fetchone()
+    if result and result[0]:
+        recommended_courses = json.loads(result[0])
 
-    # Fetch the latest student's scores
     cursor.execute("""
         SELECT verbal_language, reading_comprehension, english, math, 
                non_verbal, basic_computer 
         FROM students ORDER BY id DESC LIMIT 1
     """)
     scores_result = cursor.fetchone()
-    student_scores = list(scores_result) if scores_result else []
-
-    # Fetch all students except the latest one for averaging
-    cursor.execute("""
-        SELECT verbal_language, reading_comprehension, english, math, 
-               non_verbal, basic_computer 
-        FROM students 
-        WHERE id != (SELECT MAX(id) FROM students);
-    """)
-    all_scores = np.array(cursor.fetchall(), dtype=float)
+    student_scores = list(scores_result) if scores_result else [0] * 6
 
     print(f"User Scores: {student_scores}")
-    print(f"All Scores: {all_scores}")  # Debugging step
 
-    # Calculate average scores, handling NaNs
-    if len(all_scores) > 0:
-        avg_scores = np.nanmean(all_scores, axis=0)
-    else:
-        avg_scores = [0] * len(student_scores)
+    # Load dataset from Excel for comparison
+    dataset = pd.read_excel('dataset.xlsx', sheet_name=None)
+    all_data = pd.concat(dataset.values(), ignore_index=True)
+
+    # Filter subjects for comparison
+    subjects = ['Verbal Language', 'Reading Comprehension', 'English', 'Math', 
+                'Non Verbal', 'Basic Computer']
+    available_data = all_data[subjects].dropna().astype(float)
+
+    # Calculate the average scores from the dataset
+    avg_scores = available_data.mean().values if not available_data.empty else [0] * len(subjects)
 
     print(f"Dataset Average Scores: {avg_scores}")
 
-    # Close the database connection
     cursor.close()
     connection.close()
 
-    # Generate the comparison chart
+    # Generate comparison chart
     fig, ax = plt.subplots()
     labels = ['Verbal Lang', 'Reading Comp', 'English', 'Math', 'Non Verbal', 'Basic Comp']
     x = np.arange(len(labels))
     width = 0.35
 
-    ax.bar(x - width/2, student_scores, width, label='User', alpha=0.7)
-    ax.bar(x + width/2, avg_scores, width, label='Dataset Avg', alpha=0.7)
+    ax.bar(x - width / 2, student_scores, width, label='User', alpha=0.7)
+    ax.bar(x + width / 2, avg_scores, width, label='Dataset Avg', alpha=0.7)
 
     ax.set_xlabel('Subjects')
     ax.set_ylabel('Scores')
@@ -201,25 +202,20 @@ def results():
     ax.set_xticklabels(labels)
     ax.legend()
 
-    # Save chart to buffer
+    # Save the chart to a buffer
     buf = io.BytesIO()
     plt.savefig(buf, format='png')
     buf.seek(0)
     chart_url = base64.b64encode(buf.getvalue()).decode('utf8')
     buf.close()
 
-    # Ensure courses variable is properly initialized
-    recommended_courses = recommended_courses or []
-
     return render_template(
-        'results.html', 
-        chart_url=chart_url, 
-        student_scores=student_scores, 
-        avg_scores=list(avg_scores), 
+        'results.html',
+        chart_url=chart_url,
+        student_scores=student_scores,
+        avg_scores=list(avg_scores),
         courses=recommended_courses
     )
-
-
 
 
 if __name__ == '__main__':
