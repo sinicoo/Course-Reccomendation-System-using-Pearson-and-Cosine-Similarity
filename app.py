@@ -210,8 +210,10 @@ def results():
     angles += angles[:1]  # Closing the radar chart
 
     # Ensure scores are also closed (same first and last points)
-    student_scores.append(student_scores[0])
-    avg_scores.append(avg_scores[0])
+    student_scores = student_scores + [student_scores[0]]  # Convert to list and append
+    avg_scores = list(avg_scores)  # Convert NumPy array to list
+    avg_scores.append(avg_scores[0])  # Append to the list
+
 
     # Plotting the radar chart
     ax.plot(angles, student_scores, label='User', marker='o')
