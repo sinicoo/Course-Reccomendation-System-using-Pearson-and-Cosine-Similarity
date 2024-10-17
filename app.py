@@ -186,7 +186,7 @@ def results():
     cursor.close()
     connection.close()
 
-     # Generate Bar Chart
+    # Generate Bar Chart
     fig, ax = plt.subplots()
     labels = ['Verbal Lang', 'Reading Comp', 'English', 'Math', 'Non Verbal', 'Basic Comp']
     x = np.arange(len(labels))
@@ -210,7 +210,6 @@ def results():
     buf.close()
 
     # Generate Radar Chart
-    labels = ['Verbal Lang', 'Reading Comp', 'English', 'Math', 'Non Verbal', 'Basic Comp']
     angles = np.linspace(0, 2 * np.pi, len(labels), endpoint=False).tolist()
     student_scores += student_scores[:1]
     avg_scores = list(avg_scores) + [avg_scores[0]]
@@ -224,16 +223,17 @@ def results():
     ax.set_xticklabels(labels)
     ax.legend(loc='upper right')
 
-    # Save the radar chart to a buffer
+    # Save Radar Chart to buffer
     buf = io.BytesIO()
     plt.savefig(buf, format='png')
     buf.seek(0)
     radar_chart_url = base64.b64encode(buf.getvalue()).decode('utf8')
     buf.close()
 
-    # Render the results template with both charts
+    # Render the results page with both charts
     return render_template(
         'results.html',
+        bar_chart_url=bar_chart_url,
         radar_chart_url=radar_chart_url,
         student_scores=student_scores,
         avg_scores=list(avg_scores),
