@@ -173,10 +173,13 @@ def results():
     dataset = pd.read_excel('dataset.xlsx', sheet_name=None)
     all_data = pd.concat(dataset.values(), ignore_index=True)
 
-    # Filter subjects for comparison
+    # Print columns to debug
+    print(f"Columns in dataset: {all_data.columns.tolist()}")
+
+    # Filter subjects for comparison (ensure matching column names)
     subjects = ['Verbal Language', 'Reading Comprehension', 'English', 'Math', 
                 'Non Verbal', 'Basic Computer']
-    available_data = all_data[subjects].dropna().astype(float)
+    available_data = all_data[all_data.columns.intersection(subjects)].dropna().astype(float)
 
     # Calculate the average scores from the dataset
     avg_scores = available_data.mean().values if not available_data.empty else [0] * len(subjects)
@@ -216,6 +219,7 @@ def results():
         avg_scores=list(avg_scores),
         courses=recommended_courses
     )
+
 
 
 if __name__ == '__main__':
