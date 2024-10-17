@@ -203,26 +203,37 @@ def results():
     buf.close()
 
     # Generate Radar Chart
-    fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})
-    angles = np.linspace(0, 2 * np.pi, len(subjects), endpoint=False).tolist()
-    student_scores += student_scores[:1]  # Closing the radar chart
-    avg_scores += avg_scores[:1]  # Closing the radar chart
-    angles += angles[:1]
+    # Generate Radar Chart
+fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})
 
-    ax.plot(angles, student_scores, label='User', marker='o')
-    ax.fill(angles, student_scores, alpha=0.25)
-    ax.plot(angles, avg_scores, label='Dataset Avg', marker='o')
-    ax.fill(angles, avg_scores, alpha=0.25)
-    ax.set_xticks(angles[:-1])
-    ax.set_xticklabels(labels)
-    ax.legend(loc='upper right', bbox_to_anchor=(1.1, 1.1))
+# Create angles and ensure the data points loop back to the first point
+angles = np.linspace(0, 2 * np.pi, len(subjects), endpoint=False).tolist()
+angles += angles[:1]  # Closing the radar chart
 
-    # Save Radar Chart to Buffer
-    buf = io.BytesIO()
-    plt.savefig(buf, format='png')
-    buf.seek(0)
-    radar_chart_url = base64.b64encode(buf.getvalue()).decode('utf8')
-    buf.close()
+# Ensure scores are also closed (same first and last points)
+student_scores.append(student_scores[0])
+avg_scores.append(avg_scores[0])
+
+# Plotting the radar chart
+ax.plot(angles, student_scores, label='User', marker='o')
+ax.fill(angles, student_scores, alpha=0.25)
+
+ax.plot(angles, avg_scores, label='Dataset Avg', marker='o')
+ax.fill(angles, avg_scores, alpha=0.25)
+
+# Set the labels for each axis (subject)
+ax.set_xticks(angles[:-1])
+ax.set_xticklabels(subjects)
+
+ax.legend(loc='upper right', bbox_to_anchor=(1.1, 1.1))
+
+# Save Radar Chart to Buffer
+buf = io.BytesIO()
+plt.savefig(buf, format='png')
+buf.seek(0)
+radar_chart_url = base64.b64encode(buf.getvalue()).decode('utf8')
+buf.close()
+
 
     cursor.close()
     connection.close()
