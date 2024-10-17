@@ -186,6 +186,29 @@ def results():
     cursor.close()
     connection.close()
 
+     # Generate Bar Chart
+    fig, ax = plt.subplots()
+    labels = ['Verbal Lang', 'Reading Comp', 'English', 'Math', 'Non Verbal', 'Basic Comp']
+    x = np.arange(len(labels))
+    width = 0.35
+
+    ax.bar(x - width / 2, student_scores, width, label='User', alpha=0.7)
+    ax.bar(x + width / 2, avg_scores, width, label='Dataset Avg', alpha=0.7)
+
+    ax.set_xlabel('Subjects')
+    ax.set_ylabel('Scores')
+    ax.set_title('Comparison of User Scores with Dataset Average')
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+    ax.legend()
+
+    # Save Bar Chart to buffer
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png')
+    buf.seek(0)
+    bar_chart_url = base64.b64encode(buf.getvalue()).decode('utf8')
+    buf.close()
+
     # Generate Radar Chart
     labels = ['Verbal Lang', 'Reading Comp', 'English', 'Math', 'Non Verbal', 'Basic Comp']
     angles = np.linspace(0, 2 * np.pi, len(labels), endpoint=False).tolist()
