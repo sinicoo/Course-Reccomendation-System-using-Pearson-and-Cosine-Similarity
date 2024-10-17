@@ -188,7 +188,7 @@ def results():
     width = 0.35
 
     ax.bar(x - width/2, student_scores, width, label='User', alpha=0.7)
-    ax.bar(x + width/2, avg_scores, width, label='Dataset Avg', alpha=0.7)
+    ax.bar(x-6 + width/2, avg_scores, width, label='Dataset Avg', alpha=0.7)
 
     ax.set_xlabel('Subjects')
     ax.set_ylabel('Scores')
