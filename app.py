@@ -174,10 +174,14 @@ def results():
     print(f"All Scores: {all_scores}")  # Debugging step
 
     # Calculate average scores, handling NaNs
-    avg_scores = np.nanmean(all_scores, axis=0) if len(all_scores) > 0 else [0] * len(student_scores)
+    if len(all_scores) > 0:
+        avg_scores = np.nanmean(all_scores, axis=0)
+    else:
+        avg_scores = [0] * len(student_scores)
 
     print(f"Dataset Average Scores: {avg_scores}")
 
+    # Close the database connection
     cursor.close()
     connection.close()
 
@@ -204,12 +208,17 @@ def results():
     chart_url = base64.b64encode(buf.getvalue()).decode('utf8')
     buf.close()
 
+    # Ensure courses variable is properly initialized
+    recommended_courses = recommended_courses or []
+
     return render_template(
         'results.html', 
         chart_url=chart_url, 
         student_scores=student_scores, 
-        avg_scores=list(avg_scores)
+        avg_scores=list(avg_scores), 
+        courses=recommended_courses
     )
+
 
 
 
