@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for 
 import pandas as pd
 import numpy as np
 import json  # To store recommended courses as JSON
