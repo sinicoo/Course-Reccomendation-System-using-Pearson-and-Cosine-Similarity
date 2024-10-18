@@ -170,7 +170,7 @@ def results():
     scores_result = cursor.fetchone()
     student_scores = list(scores_result) if scores_result else [0] * 6
 
-    # Ensure student_scores is a standard list
+    # Convert student_scores to a list
     student_scores = np.array(student_scores).tolist()  # Convert to list
 
     # Load dataset from Excel for comparison
@@ -184,6 +184,8 @@ def results():
 
     # Calculate the average scores from the dataset
     avg_scores = available_data.mean().values if not available_data.empty else [0] * len(subjects)
+    
+    # Convert avg_scores to a list
     avg_scores = avg_scores.tolist()  # Ensure avg_scores is a standard list
 
     # Generate Bar Chart
@@ -241,6 +243,7 @@ def results():
                            avg_scores=avg_scores,
                            chart_url=chart_url, 
                            radar_chart_url=radar_chart_url)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
