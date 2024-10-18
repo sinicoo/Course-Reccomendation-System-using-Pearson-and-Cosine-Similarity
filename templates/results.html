@@ -112,8 +112,8 @@
     <a href="{{ url_for('index') }}">Back to Home</a>
 
     <script>
-        const studentScores = {{ student_scores | tojson }};
-        const recommendedCourses = {{ courses | tojson }};
+        const studentScores = {{ student_scores | default([]) | tojson }};
+        const recommendedCourses = {{ courses | default([]) | tojson }};
     </script>
 </body>
 </html>
