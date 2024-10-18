@@ -154,11 +154,17 @@ def results():
     # Fetch latest student’s data from the database
     connection = get_db_connection()
     cursor = connection.cursor()
+
+    # Fetch recommended courses
     cursor.execute("SELECT recommended_courses FROM students ORDER BY id DESC LIMIT 1")
     result = cursor.fetchone()
-    if result and result[0]:
-        recommended_courses = json.loads(result[0])
 
+    if result and isinstance(result[0], str):
+        recommended_courses = json.loads(result[0])
+    elif result and isinstance(result[0], list):
+        recommended_courses = result[0]  # Use directly if it's already a list
+
+    # Fetch student scores
     cursor.execute("""
         SELECT verbal_language, reading_comprehension, english, math, 
                non_verbal, basic_computer 
@@ -171,7 +177,7 @@ def results():
     dataset = pd.read_excel('dataset.xlsx', sheet_name=None)
     all_data = pd.concat(dataset.values(), ignore_index=True)
 
-    # Filter subjects for comparison (ensure matching column names)
+    # Filter subjects for comparison
     subjects = ['Verbal Language', 'Reading Comprehension', 'English', 'Math', 
                 'Non Verbal', 'Basic Computer']
     available_data = all_data[all_data.columns.intersection(subjects)].dropna().astype(float)
@@ -205,30 +211,22 @@ def results():
     # Generate Radar Chart
     fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})
 
-    # Create angles and ensure the data points loop back to the first point
     angles = np.linspace(0, 2 * np.pi, len(subjects), endpoint=False).tolist()
-    angles += angles[:1]  # Closing the radar chart
+    angles += angles[:1]
 
-    # Ensure scores are also closed (same first and last points)
-    student_scores = student_scores + [student_scores[0]]  # Convert to list and append
-    avg_scores = list(avg_scores)  # Convert NumPy array to list
-    avg_scores.append(avg_scores[0])  # Append to the list
+    student_scores += [student_scores[0]]  # Loop back to the first point
+    avg_scores = list(avg_scores) + [avg_scores[0]]
 
-
-    # Plotting the radar chart
     ax.plot(angles, student_scores, label='User', marker='o')
     ax.fill(angles, student_scores, alpha=0.25)
 
     ax.plot(angles, avg_scores, label='Dataset Avg', marker='o')
     ax.fill(angles, avg_scores, alpha=0.25)
 
-    # Set the labels for each axis (subject)
     ax.set_xticks(angles[:-1])
     ax.set_xticklabels(subjects)
-
     ax.legend(loc='upper right', bbox_to_anchor=(1.1, 1.1))
 
-    # Save Radar Chart to Buffer
     buf = io.BytesIO()
     plt.savefig(buf, format='png')
     buf.seek(0)
