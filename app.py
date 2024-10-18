@@ -154,11 +154,14 @@ def results():
     # Fetch latest student’s data from the database
     connection = get_db_connection()
     cursor = connection.cursor()
+    
+    # Fetch recommended courses
     cursor.execute("SELECT recommended_courses FROM students ORDER BY id DESC LIMIT 1")
     result = cursor.fetchone()
     if result and result[0]:
         recommended_courses = json.loads(result[0])
 
+    # Fetch scores
     cursor.execute("""
         SELECT verbal_language, reading_comprehension, english, math, 
                non_verbal, basic_computer 
@@ -166,7 +169,9 @@ def results():
     """)
     scores_result = cursor.fetchone()
     student_scores = list(scores_result) if scores_result else [0] * 6
-    student_scores = np.array(student_scores).tolist()  # Convert ndarray to list
+
+    # Ensure student_scores is a standard list
+    student_scores = np.array(student_scores).tolist()  # Convert to list
 
     # Load dataset from Excel for comparison
     dataset = pd.read_excel('dataset.xlsx', sheet_name=None)
@@ -179,7 +184,7 @@ def results():
 
     # Calculate the average scores from the dataset
     avg_scores = available_data.mean().values if not available_data.empty else [0] * len(subjects)
-    avg_scores = avg_scores.tolist()  # Convert avg_scores to a standard Python list
+    avg_scores = avg_scores.tolist()  # Ensure avg_scores is a standard list
 
     # Generate Bar Chart
     fig, ax = plt.subplots()
@@ -207,7 +212,7 @@ def results():
     # Generate Radar Chart
     fig, ax = plt.subplots(figsize=(6, 6), subplot_kw=dict(polar=True))
     num_vars = len(subjects)
-    
+
     # Compute angle for each axis
     angles = np.linspace(0, 2 * np.pi, num_vars, endpoint=False).tolist()
     student_scores = np.concatenate((student_scores, [student_scores[0]]))
