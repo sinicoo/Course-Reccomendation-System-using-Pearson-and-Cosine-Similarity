@@ -133,7 +133,7 @@ def index():
             similarity_df = pd.DataFrame({'Combined Similarity': combined_sim}, index=df.index)
             for idx, sim in similarity_df.iterrows():
                 course_name = df.loc[idx, 'Course Applied'] if 'Course Applied' in df.columns else f"Course {idx}"
-                recommended_courses.append({'course_name': course_name})
+                recommended_courses.append({'c_name': course_name})
 
         top_3_courses = recommended_courses[:3]
         student_data = {
