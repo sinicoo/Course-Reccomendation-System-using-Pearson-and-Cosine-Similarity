@@ -172,7 +172,8 @@ def results():
         FROM students ORDER BY id DESC LIMIT 1
     """)
     scores_result = cursor.fetchone()
-    student_scores = list(scores_result) if scores_result else [0] * 6
+    # Ensure scores are numeric and replace None with 0
+    student_scores = [float(score) if score is not None else 0 for score in scores_result] if scores_result else [0] * 6
 
     # Load dataset from Excel for comparison
     dataset = pd.read_excel('dataset.xlsx', sheet_name=None)
@@ -209,7 +210,11 @@ def results():
     chart_url = base64.b64encode(buf.getvalue()).decode('utf8')
     buf.close()
 
-    return render_template('results.html', recommended_courses=recommended_courses, chart_url=chart_url)
+    cursor.close()
+    connection.close()
+
+    return render_template('results.html', recommended_courses=recommended_courses, chart_url=chart_url, student_scores=student_scores)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
