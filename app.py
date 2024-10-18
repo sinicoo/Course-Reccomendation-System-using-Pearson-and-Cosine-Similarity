@@ -203,7 +203,7 @@ def results():
     result = cursor.fetchone()
     
     if result and result[0]:
-        recommended_courses = result[0]  # Directly assign the result, assuming it's already a list
+        recommended_courses = result[0]  # Assuming this is already a list, no need for json.loads()
 
     # Fetch student scores
     cursor.execute("""
@@ -213,25 +213,59 @@ def results():
     """)
     scores_result = cursor.fetchone()
     
+    # Ensure scores are numeric and replace None with 0
+    student_scores = [float(score) if score is not None else 0 for score in scores_result] if scores_result else [0] * 6
+
+    # Load dataset from Excel for comparison
+    dataset = pd.read_excel('dataset.xlsx', sheet_name=None)
+    all_data = pd.concat(dataset.values(), ignore_index=True)
+
+    # Filter subjects for comparison (ensure matching column names)
+    subjects = ['Verbal Language', 'Reading Comprehension', 'English', 'Math', 
+                'Non Verbal', 'Basic Computer']
+    available_data = all_data[all_data.columns.intersection(subjects)].dropna().astype(float)
+
+    # Calculate the average scores from the dataset
+    avg_scores = available_data.mean().values if not available_data.empty else [0] * len(subjects)
+
+    # Generate Bar Chart
+    fig, ax = plt.subplots()
+    labels = ['Verbal Lang', 'Reading Comp', 'English', 'Math', 'Non Verbal', 'Basic Comp']
+    x = np.arange(len(labels))
+    width = 0.35
+
+    ax.bar(x - width / 2, student_scores, width, label='User', alpha=0.7)
+    ax.bar(x + width / 2, avg_scores, width, label='Dataset Avg', alpha=0.7)
+
+    ax.set_xlabel('Subjects')
+    ax.set_ylabel('Scores')
+    ax.set_title('Comparison of User Scores with Dataset Average')
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+    ax.legend()
+
+    # Save Bar Chart to Buffer
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png')
+    buf.seek(0)
+    chart_url = base64.b64encode(buf.getvalue()).decode('utf8')
+    buf.close()
+
+    # Close cursor and connection
     cursor.close()
     connection.close()
 
-    if scores_result:
-        student_scores = np.array(scores_result)
-    else:
-        student_scores = np.zeros(6)
+    # Ensure no None values are passed to the template
+    recommended_courses = recommended_courses or []
+    student_scores = student_scores or []
 
-    # Average scores (from dataset or calculated in your case)
-    avg_scores = np.array([70, 75, 80, 85, 65, 90])  # Replace with actual dataset averages
-    
-    # Generate radar chart and bar chart URLs
-    labels = ['Verbal Lang', 'Reading Comp', 'English', 'Math', 'Non Verbal', 'Basic Comp']
-    radar_chart_url = generate_radar_chart(student_scores, avg_scores, labels)
-    
+    # Return the rendered template
     return render_template('results.html', 
                            recommended_courses=recommended_courses, 
-                           radar_chart_url=radar_chart_url, 
+                           chart_url=chart_url, 
                            student_scores=student_scores)
+
+
 
 
 if __name__ == '__main__':
