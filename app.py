@@ -228,8 +228,13 @@ def results():
     radar_chart_url = base64.b64encode(radar_buf.getvalue()).decode('utf8')
     radar_buf.close()
 
-    return render_template('results.html', recommended_courses=recommended_courses, 
-                           chart_url=chart_url, radar_chart_url=radar_chart_url)
+   return render_template('results.html', 
+                       recommended_courses=recommended_courses, 
+                       student_scores=student_scores,
+                       avg_scores=avg_scores,
+                       chart_url=chart_url, 
+                       radar_chart_url=radar_chart_url)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
