@@ -163,8 +163,13 @@ def results():
     cursor = connection.cursor()
     cursor.execute("SELECT recommended_courses FROM students ORDER BY id DESC LIMIT 1")
     result = cursor.fetchone()
+    
+    # Safely decode the JSON
     if result and result[0]:
-        recommended_courses = json.loads(result[0])
+        try:
+            recommended_courses = json.loads(result[0])
+        except json.JSONDecodeError:
+            recommended_courses = []  # Default to empty if there's a decoding error
 
     cursor.execute("""
         SELECT verbal_language, reading_comprehension, english, math, 
@@ -172,6 +177,7 @@ def results():
         FROM students ORDER BY id DESC LIMIT 1
     """)
     scores_result = cursor.fetchone()
+
     # Ensure scores are numeric and replace None with 0
     student_scores = [float(score) if score is not None else 0 for score in scores_result] if scores_result else [0] * 6
 
