@@ -45,13 +45,13 @@ def save_student_to_db(student_data, recommended_courses):
     connection = get_db_connection()
     cursor = connection.cursor()
     insert_query = """
-    INSERT INTO students (name, age, gender, verbal_language, reading_comprehension, 
+    INSERT INTO students (control_number, name, age, gender, verbal_language, reading_comprehension, 
                           english, math, non_verbal, basic_computer, recommended_courses)
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     """
     recommended_courses_json = json.dumps(recommended_courses)
     cursor.execute(insert_query, (
-        student_data['name'], student_data['age'], student_data['gender'],
+        student_data['control_number'], student_data['name'], student_data['age'], student_data['gender'],
         student_data['Verbal Language'], student_data['Reading Comprehension'],
         student_data['English'], student_data['Math'], student_data['Non Verbal'],
         student_data['Basic Computer'], recommended_courses_json
@@ -104,6 +104,7 @@ def impute_missing_values(df, available_subjects):
 def index():
     user_input = {}
     if request.method == 'POST':
+        control_number = request.form.get('control_number')  # Get the control number
         name = request.form.get('name')
         age = request.form.get('age')
         gender = request.form.get('gender')
@@ -137,6 +138,7 @@ def index():
 
         top_3_courses = recommended_courses[:3]
         student_data = {
+            'control_number': control_number,  # Include control number in the data
             'name': name, 'age': age, 'gender': gender,
             'Verbal Language': user_input.get('Verbal Language'),
             'Reading Comprehension': user_input.get('Reading Comprehension'),
@@ -144,19 +146,23 @@ def index():
             'Non Verbal': user_input.get('Non Verbal'), 'Basic Computer': user_input.get('Basic Computer')
         }
         save_student_to_db(student_data, top_3_courses)
-        return redirect(url_for('results'))
+        return redirect(url_for('results', control_number=control_number))  # Redirect to results page with control number
     return render_template('index.html')
 
 @app.route('/results')
 def results():
+    control_number = request.args.get('control_number')  # Get control number from query params
+    if not control_number:
+        return "Control number is missing.", 400
+
     recommended_courses = []  # Initialize recommended courses
 
-    # Fetch latest student’s data from the database
+    # Fetch student’s data from the database using control number
     connection = get_db_connection()
     cursor = connection.cursor()
     
     # Fetch recommended courses
-    cursor.execute("SELECT recommended_courses FROM students ORDER BY id DESC LIMIT 1")
+    cursor.execute("SELECT recommended_courses FROM students WHERE control_number = %s", (control_number,))
     result = cursor.fetchone()
     if result and result[0]:
         recommended_courses = json.loads(result[0])
@@ -165,8 +171,8 @@ def results():
     cursor.execute("""
         SELECT verbal_language, reading_comprehension, english, math, 
                non_verbal, basic_computer 
-        FROM students ORDER BY id DESC LIMIT 1
-    """)
+        FROM students WHERE control_number = %s
+    """, (control_number,))
     scores_result = cursor.fetchone()
     student_scores = list(scores_result) if scores_result else [0] * 6
 
@@ -195,55 +201,45 @@ def results():
     width = 0.35
 
     ax.bar(x - width / 2, student_scores, width, label='User', alpha=0.7)
-    ax.bar(x + width / 2, avg_scores, width, label='Dataset Avg', alpha=0.7)
+    ax.bar(x + width / 2, avg_scores, width, label='Average', alpha=0.7)
 
     ax.set_xlabel('Subjects')
     ax.set_ylabel('Scores')
-    ax.set_title('Comparison of User Scores with Dataset Average')
+    ax.set_title('User vs Dataset Average')
     ax.set_xticks(x)
     ax.set_xticklabels(labels)
     ax.legend()
 
-    # Save Bar Chart to Buffer
-    buf = io.BytesIO()
-    plt.savefig(buf, format='png')
-    buf.seek(0)
-    chart_url = base64.b64encode(buf.getvalue()).decode('utf8')
-    buf.close()
+    plt.tight_layout()
+
+    bar_chart = io.BytesIO()
+    plt.savefig(bar_chart, format='png')
+    bar_chart.seek(0)
+    bar_chart_data = base64.b64encode(bar_chart.getvalue()).decode('utf8')
+    plt.close()
 
     # Generate Radar Chart
-    fig, ax = plt.subplots(figsize=(6, 6), subplot_kw=dict(polar=True))
-    num_vars = len(subjects)
-
-    # Compute angle for each axis
-    angles = np.linspace(0, 2 * np.pi, num_vars, endpoint=False).tolist()
-    student_scores = np.concatenate((student_scores, [student_scores[0]]))
-    avg_scores = np.concatenate((avg_scores, [avg_scores[0]]))
+    fig, ax = plt.subplots(subplot_kw={'projection': 'radar'})
+    angles = np.linspace(0, 2 * np.pi, len(subjects), endpoint=False).tolist()
     angles += angles[:1]
+    student_scores += student_scores[:1]
+    avg_scores += avg_scores[:1]
 
-    # Draw the radar chart
-    ax.fill(angles, student_scores, color='red', alpha=0.25, label='User Scores')
-    ax.fill(angles, avg_scores, color='blue', alpha=0.25, label='Average Scores')
+    ax.fill(angles, student_scores, color='b', alpha=0.25)
+    ax.fill(angles, avg_scores, color='r', alpha=0.25)
 
-    # Draw one axe per variable and add labels
     ax.set_yticklabels([])
     ax.set_xticks(angles[:-1])
     ax.set_xticklabels(labels)
 
-    # Save Radar Chart to Buffer
-    radar_buf = io.BytesIO()
-    plt.savefig(radar_buf, format='png')
-    radar_buf.seek(0)
-    radar_chart_url = base64.b64encode(radar_buf.getvalue()).decode('utf8')
-    radar_buf.close()
+    radar_chart = io.BytesIO()
+    plt.savefig(radar_chart, format='png')
+    radar_chart.seek(0)
+    radar_chart_data = base64.b64encode(radar_chart.getvalue()).decode('utf8')
+    plt.close()
 
-    return render_template('results.html', 
-                           recommended_courses=recommended_courses, 
-                           student_scores=student_scores,
-                           avg_scores=avg_scores,
-                           chart_url=chart_url, 
-                           radar_chart_url=radar_chart_url)
-
+    return render_template('results.html', recommended_courses=recommended_courses, 
+                           bar_chart_data=bar_chart_data, radar_chart_data=radar_chart_data)
 
 if __name__ == '__main__':
     app.run(debug=True)
