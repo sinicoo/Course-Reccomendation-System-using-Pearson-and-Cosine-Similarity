@@ -45,13 +45,13 @@ def save_student_to_db(student_data, recommended_courses):
     connection = get_db_connection()
     cursor = connection.cursor()
     insert_query = """
-    INSERT INTO students (name, age, gender, verbal_language, reading_comprehension, 
+    INSERT INTO students (name, control_number, gender, verbal_language, reading_comprehension, 
                           english, math, non_verbal, basic_computer, recommended_courses)
     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     """
     recommended_courses_json = json.dumps(recommended_courses)
     cursor.execute(insert_query, (
-        student_data['name'], student_data['age'], student_data['gender'],
+        student_data['name'], student_data['control_number'], student_data['gender'],
         student_data['Verbal Language'], student_data['Reading Comprehension'],
         student_data['English'], student_data['Math'], student_data['Non Verbal'],
         student_data['Basic Computer'], recommended_courses_json
@@ -105,7 +105,7 @@ def index():
     user_input = {}
     if request.method == 'POST':
         name = request.form.get('name')
-        age = request.form.get('age')
+        control_number = request.form.get('control_number')
         gender = request.form.get('gender')
         for subject in subjects:
             user_score = request.form.get(subject)
@@ -137,7 +137,7 @@ def index():
 
         top_3_courses = recommended_courses[:3]
         student_data = {
-            'name': name, 'age': age, 'gender': gender,
+            'name': name, 'control_number': control_number, 'gender': gender,
             'Verbal Language': user_input.get('Verbal Language'),
             'Reading Comprehension': user_input.get('Reading Comprehension'),
             'English': user_input.get('English'), 'Math': user_input.get('Math'),
