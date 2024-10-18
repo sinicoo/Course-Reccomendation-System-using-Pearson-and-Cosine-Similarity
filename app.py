@@ -203,7 +203,7 @@ def results():
     result = cursor.fetchone()
     
     if result and result[0]:
-        recommended_courses = json.loads(result[0])  # Parse JSON string back to a list
+        recommended_courses = result[0]  # Directly assign the result, assuming it's already a list
 
     # Fetch student scores
     cursor.execute("""
@@ -232,6 +232,7 @@ def results():
                            recommended_courses=recommended_courses, 
                            radar_chart_url=radar_chart_url, 
                            student_scores=student_scores)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
