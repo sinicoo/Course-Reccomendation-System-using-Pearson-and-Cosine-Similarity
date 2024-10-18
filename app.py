@@ -165,9 +165,8 @@ def results():
         FROM students ORDER BY id DESC LIMIT 1
     """)
     scores_result = cursor.fetchone()
-    
-    # Ensure student_scores is a list of 0s if no results were fetched
     student_scores = list(scores_result) if scores_result else [0] * 6
+    student_scores = np.array(student_scores).tolist()  # Convert ndarray to list
 
     # Load dataset from Excel for comparison
     dataset = pd.read_excel('dataset.xlsx', sheet_name=None)
@@ -180,6 +179,7 @@ def results():
 
     # Calculate the average scores from the dataset
     avg_scores = available_data.mean().values if not available_data.empty else [0] * len(subjects)
+    avg_scores = avg_scores.tolist()  # Convert avg_scores to a standard Python list
 
     # Generate Bar Chart
     fig, ax = plt.subplots()
@@ -231,11 +231,11 @@ def results():
     radar_buf.close()
 
     return render_template('results.html', 
-                       recommended_courses=recommended_courses, 
-                       student_scores=student_scores,
-                       avg_scores=avg_scores,
-                       chart_url=chart_url, 
-                       radar_chart_url=radar_chart_url)
+                           recommended_courses=recommended_courses, 
+                           student_scores=student_scores,
+                           avg_scores=avg_scores,
+                           chart_url=chart_url, 
+                           radar_chart_url=radar_chart_url)
 
 
 if __name__ == '__main__':
