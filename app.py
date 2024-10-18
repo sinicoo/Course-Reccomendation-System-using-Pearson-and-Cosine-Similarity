@@ -203,27 +203,33 @@ def results():
     buf.close()
 
     # Generate Radar Chart
-    fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})
-
-    angles = np.linspace(0, 2 * np.pi, len(subjects), endpoint=False).tolist()
-    student_scores_radar = np.concatenate((student_scores, [student_scores[0]]))
-    avg_scores_radar = np.concatenate((avg_scores, [avg_scores[0]]))
+    fig, ax = plt.subplots(figsize=(6, 6), subplot_kw=dict(polar=True))
+    num_vars = len(subjects)
+    
+    # Compute angle for each axis
+    angles = np.linspace(0, 2 * np.pi, num_vars, endpoint=False).tolist()
+    student_scores = np.concatenate((student_scores, [student_scores[0]]))
+    avg_scores = np.concatenate((avg_scores, [avg_scores[0]]))
     angles += angles[:1]
 
-    ax.fill(angles, student_scores_radar, color='red', alpha=0.25)
-    ax.fill(angles, avg_scores_radar, color='blue', alpha=0.25)
+    # Draw the radar chart
+    ax.fill(angles, student_scores, color='red', alpha=0.25, label='User Scores')
+    ax.fill(angles, avg_scores, color='blue', alpha=0.25, label='Average Scores')
+
+    # Draw one axe per variable and add labels
     ax.set_yticklabels([])
     ax.set_xticks(angles[:-1])
     ax.set_xticklabels(labels)
 
     # Save Radar Chart to Buffer
-    buf = io.BytesIO()
-    plt.savefig(buf, format='png')
-    buf.seek(0)
-    radar_chart_url = base64.b64encode(buf.getvalue()).decode('utf8')
-    buf.close()
+    radar_buf = io.BytesIO()
+    plt.savefig(radar_buf, format='png')
+    radar_buf.seek(0)
+    radar_chart_url = base64.b64encode(radar_buf.getvalue()).decode('utf8')
+    radar_buf.close()
 
-    return render_template('results.html', recommended_courses=recommended_courses, chart_url=chart_url, radar_chart_url=radar_chart_url)
+    return render_template('results.html', recommended_courses=recommended_courses, 
+                           chart_url=chart_url, radar_chart_url=radar_chart_url)
 
 if __name__ == '__main__':
     app.run(debug=True)
