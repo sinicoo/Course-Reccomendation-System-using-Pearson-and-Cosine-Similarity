@@ -100,42 +100,6 @@ def impute_missing_values(df, available_subjects):
     df[available_subjects] = imputer.fit_transform(df[available_subjects])
     return df
 
-def generate_radar_chart(user_scores, avg_scores, labels):
-    # Number of variables
-    num_vars = len(labels)
-
-    # Create the figure and polar axis
-    fig, ax = plt.subplots(subplot_kw=dict(polar=True))
-
-    # Compute angle for each axis
-    angles = np.linspace(0, 2 * np.pi, num_vars, endpoint=False).tolist()
-
-    # Complete the loop by appending the first score to the end
-    user_scores = np.concatenate((user_scores, [user_scores[0]]))
-    avg_scores = np.concatenate((avg_scores, [avg_scores[0]]))
-    angles += angles[:1]
-
-    # Plot both the user and average scores
-    ax.fill(angles, user_scores, color='red', alpha=0.25)
-    ax.fill(angles, avg_scores, color='blue', alpha=0.25)
-    
-    ax.plot(angles, user_scores, color='red', linewidth=2, label="User")
-    ax.plot(angles, avg_scores, color='blue', linewidth=2, label="Dataset Avg")
-
-    # Set labels for each axis
-    ax.set_xticks(angles[:-1])
-    ax.set_xticklabels(labels)
-    ax.legend()
-
-    # Save the radar chart to buffer and encode in base64
-    buf = io.BytesIO()
-    plt.savefig(buf, format='png')
-    buf.seek(0)
-    radar_chart_url = base64.b64encode(buf.getvalue()).decode('utf8')
-    buf.close()
-    
-    return radar_chart_url
-
 @app.route('/', methods=['GET', 'POST'])
 def index():
     user_input = {}
@@ -192,6 +156,9 @@ def index():
 
 @app.route('/results')
 def results():
+    # Ensure no None values are passed to the template
+    recommended_courses = recommended_courses or []
+    student_scores = student_scores or []
     recommended_courses = []  # Initialize recommended courses
 
     # Fetch latest student’s data from the database
@@ -203,7 +170,7 @@ def results():
     result = cursor.fetchone()
     
     if result and result[0]:
-        recommended_courses = result[0]  # Assuming this is already a list, no need for json.loads()
+        recommended_courses = json.loads(result[0])
 
     # Fetch student scores
     cursor.execute("""
@@ -212,8 +179,6 @@ def results():
         FROM students ORDER BY id DESC LIMIT 1
     """)
     scores_result = cursor.fetchone()
-    
-    # Ensure scores are numeric and replace None with 0
     student_scores = [float(score) if score is not None else 0 for score in scores_result] if scores_result else [0] * 6
 
     # Load dataset from Excel for comparison
@@ -255,18 +220,14 @@ def results():
     cursor.close()
     connection.close()
 
-    # Ensure no None values are passed to the template
-    recommended_courses = recommended_courses or []
-    student_scores = student_scores or []
-
     return render_template(
-            'results.html',
-            chart_url=chart_url,
-            radar_chart_url=radar_chart_url,
-            student_scores=student_scores,
-            avg_scores=list(avg_scores),
-            courses=recommended_courses
-        )
+        'results.html',
+        chart_url=chart_url,
+        radar_chart_url=radar_chart_url,
+        student_scores=student_scores,
+        avg_scores=list(avg_scores),
+        courses=recommended_courses
+    )
 
 
 
