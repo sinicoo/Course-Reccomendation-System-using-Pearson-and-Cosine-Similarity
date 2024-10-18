@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for 
+from flask import Flask, render_template, request, redirect, url_for
 import pandas as pd
 import numpy as np
 import json  # To store recommended courses as JSON
@@ -41,17 +41,17 @@ def get_db_connection():
     return connection
 
 def save_student_to_db(student_data, recommended_courses):
-    """Insert student data along with recommended courses into the students table."""
+    """Insert student data along with control number and recommended courses into the students table."""
     connection = get_db_connection()
     cursor = connection.cursor()
     insert_query = """
-    INSERT INTO students (name, age, gender, verbal_language, reading_comprehension, 
+    INSERT INTO students (control_number, name, age, gender, verbal_language, reading_comprehension, 
                           english, math, non_verbal, basic_computer, recommended_courses)
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     """
     recommended_courses_json = json.dumps(recommended_courses)
     cursor.execute(insert_query, (
-        student_data['name'], student_data['age'], student_data['gender'],
+        student_data['control_number'], student_data['name'], student_data['age'], student_data['gender'],
         student_data['Verbal Language'], student_data['Reading Comprehension'],
         student_data['English'], student_data['Math'], student_data['Non Verbal'],
         student_data['Basic Computer'], recommended_courses_json
@@ -104,9 +104,14 @@ def impute_missing_values(df, available_subjects):
 def index():
     user_input = {}
     if request.method == 'POST':
+        control_number = request.form.get('control_number')
         name = request.form.get('name')
         age = request.form.get('age')
         gender = request.form.get('gender')
+
+        if not control_number:
+            return render_template('index.html', error="Control number is required.")
+
         for subject in subjects:
             user_score = request.form.get(subject)
             if user_score:
@@ -131,18 +136,20 @@ def index():
             pearson_sim = compute_pearson_similarity(user_df, df, available_subjects)
             combined_sim = (cosine_sim + pearson_sim) / 2
             similarity_df = pd.DataFrame({'Combined Similarity': combined_sim}, index=df.index)
+
             for idx, sim in similarity_df.iterrows():
                 course_name = df.loc[idx, 'Course Applied'] if 'Course Applied' in df.columns else f"Course {idx}"
                 recommended_courses.append({'course_name': course_name})
 
         top_3_courses = recommended_courses[:3]
         student_data = {
-            'name': name, 'age': age, 'gender': gender,
+            'control_number': control_number, 'name': name, 'age': age, 'gender': gender,
             'Verbal Language': user_input.get('Verbal Language'),
             'Reading Comprehension': user_input.get('Reading Comprehension'),
             'English': user_input.get('English'), 'Math': user_input.get('Math'),
             'Non Verbal': user_input.get('Non Verbal'), 'Basic Computer': user_input.get('Basic Computer')
         }
+        
         save_student_to_db(student_data, top_3_courses)
         return redirect(url_for('results'))
     return render_template('index.html')
@@ -202,50 +209,7 @@ def results():
     chart_url = base64.b64encode(buf.getvalue()).decode('utf8')
     buf.close()
 
-    # Generate Radar Chart
-    fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})
-
-    # Create angles and ensure the data points loop back to the first point
-    angles = np.linspace(0, 2 * np.pi, len(subjects), endpoint=False).tolist()
-    angles += angles[:1]  # Closing the radar chart
-
-    # Ensure scores are also closed (same first and last points)
-    student_scores = student_scores + [student_scores[0]]  # Convert to list and append
-    avg_scores = list(avg_scores)  # Convert NumPy array to list
-    avg_scores.append(avg_scores[0])  # Append to the list
-
-
-    # Plotting the radar chart
-    ax.plot(angles, student_scores, label='User', marker='o')
-    ax.fill(angles, student_scores, alpha=0.25)
-
-    ax.plot(angles, avg_scores, label='Dataset Avg', marker='o')
-    ax.fill(angles, avg_scores, alpha=0.25)
-
-    # Set the labels for each axis (subject)
-    ax.set_xticks(angles[:-1])
-    ax.set_xticklabels(subjects)
-
-    ax.legend(loc='upper right', bbox_to_anchor=(1.1, 1.1))
-
-    # Save Radar Chart to Buffer
-    buf = io.BytesIO()
-    plt.savefig(buf, format='png')
-    buf.seek(0)
-    radar_chart_url = base64.b64encode(buf.getvalue()).decode('utf8')
-    buf.close()
-
-    cursor.close()
-    connection.close()
-
-    return render_template(
-        'results.html',
-        chart_url=chart_url,
-        radar_chart_url=radar_chart_url,
-        student_scores=student_scores,
-        avg_scores=list(avg_scores),
-        courses=recommended_courses
-    )
+    return render_template('results.html', recommended_courses=recommended_courses, chart_url=chart_url)
 
 if __name__ == '__main__':
     app.run(debug=True)
