@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for ##Backup
+from flask import Flask, render_template, request, redirect, url_for 
 import pandas as pd
 import numpy as np
 import json  # To store recommended courses as JSON
@@ -12,6 +12,8 @@ from sklearn.impute import KNNImputer
 from scipy.stats import pearsonr
 from sklearn.cluster import DBSCAN
 from sklearn.metrics import silhouette_score
+from werkzeug.utils import secure_filename
+import os
 
 app = Flask(__name__)
 
@@ -20,6 +22,10 @@ app.config['POSTGRES_HOST'] = 'dpg-cs7p98rv2p9s73f7et7g-a.oregon-postgres.render
 app.config['POSTGRES_USER'] = 'admin'
 app.config['POSTGRES_PASSWORD'] = 'AMw3AcY1JyczmVcOiWyRdSK1buiygRVJ'
 app.config['POSTGRES_DB'] = 'flaskdb_kspp'
+
+UPLOAD_FOLDER = 'uploads'
+ALLOWED_EXTENSIONS = {'xlsx'}
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 subjects = [
     'Verbal Language', 'Reading Comprehension', 'English', 'Math',
@@ -100,51 +106,82 @@ def impute_missing_values(df, available_subjects):
     df[available_subjects] = imputer.fit_transform(df[available_subjects])
     return df
 
+def merge_with_dataset(new_data):
+    """Merge the new data with the existing dataset."""
+    if os.path.exists(file_path):
+        existing_data = pd.read_excel(file_path)
+    else:
+        existing_data = pd.DataFrame()
+
+    updated_data = pd.concat([existing_data, new_data], ignore_index=True)
+    updated_data.to_excel(file_path, index=False)
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     user_input = {}
     if request.method == 'POST':
-        name = request.form.get('name')
-        age = request.form.get('age')
-        gender = request.form.get('gender')
-        for subject in subjects:
-            user_score = request.form.get(subject)
-            if user_score:
+        if 'file' in request.files:
+            # Handle file upload
+            file = request.files['file']
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                file.save(file_path)
+
                 try:
-                    user_score = float(user_score)
-                    if user_score < 0 or user_score > 100:
-                        return render_template('index.html', error=f"{subject} score must be between 0 and 100.")
-                except ValueError:
-                    return render_template('index.html', error=f"{subject} score must be a number.")
-                user_input[subject] = user_score
+                    new_data = pd.read_excel(file_path)
+                    merge_with_dataset(new_data)
+                    return redirect(url_for('index'))
+                except Exception as e:
+                    return render_template('index.html', error=f"Error processing the file: {str(e)}")
             else:
-                user_input[subject] = np.nan
+                return render_template('index.html', error="Invalid file type. Only .xlsx files are allowed.")
+        else:
+            # Handle student data form submission
+            name = request.form.get('name')
+            age = request.form.get('age')
+            gender = request.form.get('gender')
+            for subject in subjects:
+                user_score = request.form.get(subject)
+                if user_score:
+                    try:
+                        user_score = float(user_score)
+                        if user_score < 0 or user_score > 100:
+                            return render_template('index.html', error=f"{subject} score must be between 0 and 100.")
+                    except ValueError:
+                        return render_template('index.html', error=f"{subject} score must be a number.")
+                    user_input[subject] = user_score
+                else:
+                    user_input[subject] = np.nan
 
-        user_df = pd.DataFrame([user_input])
-        recommended_courses = []
-        for sheet_name, df in sheets.items():
-            available_subjects = [s for s in subjects if s in df.columns]
-            df = impute_missing_values(df, available_subjects)
-            df, _ = cluster_courses(df, available_subjects)
-            percentiles_df = compute_subject_percentiles(df, available_subjects)
-            cosine_sim, _ = combined_similarity_with_percentiles(user_df, df, available_subjects, percentiles_df)
-            pearson_sim = compute_pearson_similarity(user_df, df, available_subjects)
-            combined_sim = (cosine_sim + pearson_sim) / 2
-            similarity_df = pd.DataFrame({'Combined Similarity': combined_sim}, index=df.index)
-            for idx, sim in similarity_df.iterrows():
-                course_name = df.loc[idx, 'Course Applied'] if 'Course Applied' in df.columns else f"Course {idx}"
-                recommended_courses.append({'course_name': course_name})
+            user_df = pd.DataFrame([user_input])
+            recommended_courses = []
+            for sheet_name, df in sheets.items():
+                available_subjects = [s for s in subjects if s in df.columns]
+                df = impute_missing_values(df, available_subjects)
+                df, _ = cluster_courses(df, available_subjects)
+                percentiles_df = compute_subject_percentiles(df, available_subjects)
+                cosine_sim, _ = combined_similarity_with_percentiles(user_df, df, available_subjects, percentiles_df)
+                pearson_sim = compute_pearson_similarity(user_df, df, available_subjects)
+                combined_sim = (cosine_sim + pearson_sim) / 2
+                similarity_df = pd.DataFrame({'Combined Similarity': combined_sim}, index=df.index)
+                for idx, sim in similarity_df.iterrows():
+                    course_name = df.loc[idx, 'Course Applied'] if 'Course Applied' in df.columns else f"Course {idx}"
+                    recommended_courses.append({'course_name': course_name})
 
-        top_3_courses = recommended_courses[:3]
-        student_data = {
-            'name': name, 'age': age, 'gender': gender,
-            'Verbal Language': user_input.get('Verbal Language'),
-            'Reading Comprehension': user_input.get('Reading Comprehension'),
-            'English': user_input.get('English'), 'Math': user_input.get('Math'),
-            'Non Verbal': user_input.get('Non Verbal'), 'Basic Computer': user_input.get('Basic Computer')
-        }
-        save_student_to_db(student_data, top_3_courses)
-        return redirect(url_for('results'))
+            top_3_courses = recommended_courses[:3]
+            student_data = {
+                'name': name, 'age': age, 'gender': gender,
+                'Verbal Language': user_input.get('Verbal Language'),
+                'Reading Comprehension': user_input.get('Reading Comprehension'),
+                'English': user_input.get('English'), 'Math': user_input.get('Math'),
+                'Non Verbal': user_input.get('Non Verbal'), 'Basic Computer': user_input.get('Basic Computer')
+            }
+            save_student_to_db(student_data, top_3_courses)
+            return redirect(url_for('results'))
     return render_template('index.html')
 
 @app.route('/results')
@@ -165,16 +202,13 @@ def results():
         recommended_courses = result[0]  # Use directly if it's already a list
 
     # Fetch student scores
-    cursor.execute("""
-        SELECT verbal_language, reading_comprehension, english, math, 
-               non_verbal, basic_computer 
-        FROM students ORDER BY id DESC LIMIT 1
-    """)
+    cursor.execute("""SELECT verbal_language, reading_comprehension, english, math, 
+                      non_verbal, basic_computer FROM students ORDER BY id DESC LIMIT 1""")
     scores_result = cursor.fetchone()
     student_scores = list(scores_result) if scores_result else [0] * 6
 
     # Load dataset from Excel for comparison
-    dataset = pd.read_excel('dataset.xlsx', sheet_name=None)
+    dataset = pd.read_excel(file_path, sheet_name=None)
     all_data = pd.concat(dataset.values(), ignore_index=True)
 
     # Filter subjects for comparison
@@ -246,4 +280,6 @@ def results():
     )
 
 if __name__ == '__main__':
+    if not os.path.exists(UPLOAD_FOLDER):
+        os.makedirs(UPLOAD_FOLDER)
     app.run(debug=True)
