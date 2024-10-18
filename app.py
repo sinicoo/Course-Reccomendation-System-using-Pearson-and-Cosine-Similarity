@@ -156,9 +156,6 @@ def index():
 
 @app.route('/results')
 def results():
-    # Ensure no None values are passed to the template
-    recommended_courses = recommended_courses or []
-    student_scores = student_scores or []
     recommended_courses = []  # Initialize recommended courses
 
     # Fetch latest student’s data from the database
@@ -219,6 +216,10 @@ def results():
     # Close cursor and connection
     cursor.close()
     connection.close()
+
+    # Ensure no None values are passed to the template
+    recommended_courses = recommended_courses or []
+    student_scores = student_scores or []
 
     return render_template(
         'results.html',
