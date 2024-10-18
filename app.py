@@ -259,12 +259,14 @@ def results():
     recommended_courses = recommended_courses or []
     student_scores = student_scores or []
 
-    # Return the rendered template
-    return render_template('results.html', 
-                           recommended_courses=recommended_courses, 
-                           chart_url=chart_url, 
-                           student_scores=student_scores)
-
+    return render_template(
+            'results.html',
+            chart_url=chart_url,
+            radar_chart_url=radar_chart_url,
+            student_scores=student_scores,
+            avg_scores=list(avg_scores),
+            courses=recommended_courses
+        )
 
 
 
