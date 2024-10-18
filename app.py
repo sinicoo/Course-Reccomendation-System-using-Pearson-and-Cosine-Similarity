@@ -174,10 +174,12 @@ def results():
         FROM students WHERE control_number = %s
     """, (control_number,))
     scores_result = cursor.fetchone()
-    student_scores = list(scores_result) if scores_result else [0] * 6
 
-    # Convert student_scores to a list
-    student_scores = np.array(student_scores).tolist()  # Convert to list
+    # Initialize student_scores to an empty list if no scores are found
+    if scores_result:
+        student_scores = list(scores_result)
+    else:
+        student_scores = [0] * 6  # Default to 0 scores for all subjects
 
     # Load dataset from Excel for comparison
     dataset = pd.read_excel('dataset.xlsx', sheet_name=None)
@@ -246,8 +248,11 @@ def results():
 
     radar_chart_data = radar_chart(student_scores, avg_scores, subjects)
 
+    # Ensure student_scores is properly handled in the template
     return render_template('results.html', recommended_courses=recommended_courses, 
-                           bar_chart_data=bar_chart_data, radar_chart_data=radar_chart_data)
+                           bar_chart_data=bar_chart_data, radar_chart_data=radar_chart_data,
+                           student_scores=student_scores)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
