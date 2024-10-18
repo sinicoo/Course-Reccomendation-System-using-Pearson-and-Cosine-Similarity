@@ -205,12 +205,10 @@ def results():
 
     ax.set_xlabel('Subjects')
     ax.set_ylabel('Scores')
-    ax.set_title('User vs Dataset Average')
+    ax.set_title('Student vs. Average Scores')
     ax.set_xticks(x)
     ax.set_xticklabels(labels)
     ax.legend()
-
-    plt.tight_layout()
 
     bar_chart = io.BytesIO()
     plt.savefig(bar_chart, format='png')
@@ -219,24 +217,34 @@ def results():
     plt.close()
 
     # Generate Radar Chart
-    fig, ax = plt.subplots(subplot_kw={'projection': 'radar'})
-    angles = np.linspace(0, 2 * np.pi, len(subjects), endpoint=False).tolist()
-    angles += angles[:1]
-    student_scores += student_scores[:1]
-    avg_scores += avg_scores[:1]
+    def radar_chart(student_scores, avg_scores, subjects):
+        labels = ['Verbal Lang', 'Reading Comp', 'English', 'Math', 'Non Verbal', 'Basic Comp']
+        angles = np.linspace(0, 2 * np.pi, len(subjects), endpoint=False).tolist()
+        angles += angles[:1]  # Close the circle
 
-    ax.fill(angles, student_scores, color='b', alpha=0.25)
-    ax.fill(angles, avg_scores, color='r', alpha=0.25)
+        student_scores += student_scores[:1]  # Complete the loop for radar chart
+        avg_scores += avg_scores[:1]
 
-    ax.set_yticklabels([])
-    ax.set_xticks(angles[:-1])
-    ax.set_xticklabels(labels)
+        fig, ax = plt.subplots(figsize=(6, 6), subplot_kw=dict(polar=True))
 
-    radar_chart = io.BytesIO()
-    plt.savefig(radar_chart, format='png')
-    radar_chart.seek(0)
-    radar_chart_data = base64.b64encode(radar_chart.getvalue()).decode('utf8')
-    plt.close()
+        ax.fill(angles, student_scores, color='b', alpha=0.25, label='User')
+        ax.fill(angles, avg_scores, color='r', alpha=0.25, label='Average')
+
+        ax.set_yticklabels([])  # Remove radial labels
+        ax.set_xticks(angles[:-1])
+        ax.set_xticklabels(labels)
+
+        ax.legend(loc='upper right', bbox_to_anchor=(0.1, 0.1))
+
+        radar_chart = io.BytesIO()
+        plt.savefig(radar_chart, format='png')
+        radar_chart.seek(0)
+        radar_chart_data = base64.b64encode(radar_chart.getvalue()).decode('utf8')
+        plt.close()
+
+        return radar_chart_data
+
+    radar_chart_data = radar_chart(student_scores, avg_scores, subjects)
 
     return render_template('results.html', recommended_courses=recommended_courses, 
                            bar_chart_data=bar_chart_data, radar_chart_data=radar_chart_data)
