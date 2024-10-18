@@ -165,6 +165,8 @@ def results():
         FROM students ORDER BY id DESC LIMIT 1
     """)
     scores_result = cursor.fetchone()
+    
+    # Ensure student_scores is a list of 0s if no results were fetched
     student_scores = list(scores_result) if scores_result else [0] * 6
 
     # Load dataset from Excel for comparison
@@ -228,7 +230,7 @@ def results():
     radar_chart_url = base64.b64encode(radar_buf.getvalue()).decode('utf8')
     radar_buf.close()
 
-   return render_template('results.html', 
+    return render_template('results.html', 
                        recommended_courses=recommended_courses, 
                        student_scores=student_scores,
                        avg_scores=avg_scores,
