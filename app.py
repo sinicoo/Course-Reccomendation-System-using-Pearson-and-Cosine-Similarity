@@ -46,7 +46,7 @@ def save_student_to_db(student_data, recommended_courses):
     cursor = connection.cursor()
     insert_query = """
     INSERT INTO students (name, age, gender, verbal_language, reading_comprehension, 
-                          english, math, non_verbal, basic_computer, control_number, recommended_courses)
+                          english, math, non_verbal, basic_computer, recommended_courses)
     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     """
     recommended_courses_json = json.dumps(recommended_courses)
@@ -54,7 +54,7 @@ def save_student_to_db(student_data, recommended_courses):
         student_data['name'], student_data['age'], student_data['gender'],
         student_data['Verbal Language'], student_data['Reading Comprehension'],
         student_data['English'], student_data['Math'], student_data['Non Verbal'],
-        student_data['Basic Computer'], student_data['control_number'], recommended_courses_json
+        student_data['Basic Computer'], recommended_courses_json
     ))
     connection.commit()
     cursor.close()
@@ -104,7 +104,6 @@ def impute_missing_values(df, available_subjects):
 def index():
     user_input = {}
     if request.method == 'POST':
-	control_number = request.form.get('control_number')
         name = request.form.get('name')
         age = request.form.get('age')
         gender = request.form.get('gender')
@@ -138,7 +137,7 @@ def index():
 
         top_3_courses = recommended_courses[:3]
         student_data = {
-            'control_number': control_number, 'name': name, 'age': age, 'gender': gender,
+            'name': name, 'age': age, 'gender': gender,
             'Verbal Language': user_input.get('Verbal Language'),
             'Reading Comprehension': user_input.get('Reading Comprehension'),
             'English': user_input.get('English'), 'Math': user_input.get('Math'),
