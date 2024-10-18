@@ -161,12 +161,15 @@ def results():
     # Fetch latest student’s data from the database
     connection = get_db_connection()
     cursor = connection.cursor()
+
+    # Fetch recommended courses
     cursor.execute("SELECT recommended_courses FROM students ORDER BY id DESC LIMIT 1")
     result = cursor.fetchone()
     
     if result and result[0]:
-        recommended_courses = result[0]  # No need to use json.loads(), it's already a list
+        recommended_courses = result[0]  # Assuming this is already a list, no need for json.loads()
 
+    # Fetch student scores
     cursor.execute("""
         SELECT verbal_language, reading_comprehension, english, math, 
                non_verbal, basic_computer 
@@ -212,8 +215,19 @@ def results():
     chart_url = base64.b64encode(buf.getvalue()).decode('utf8')
     buf.close()
 
+    # Close cursor and connection
     cursor.close()
     connection.close()
+
+    # Ensure no None values are passed to the template
+    recommended_courses = recommended_courses or []
+    student_scores = student_scores or []
+
+    # Return the rendered template
+    return render_template('results.html', 
+                           recommended_courses=recommended_courses, 
+                           chart_url=chart_url, 
+                           student_scores=student_scores)
 
     return render_template('results.html', recommended_courses=recommended_courses, chart_url=chart_url, student_scores=student_scores)
 
