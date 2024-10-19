@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aptitude Test</title>
+    <title>Course Recommender</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -59,6 +59,19 @@
         button:hover {
             background: #4cae4c;
         }
+        .message {
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
         .footer {
             text-align: center;
             padding: 20px;
@@ -71,17 +84,32 @@
 <body>
     <header>
         <div class="container">
-            <h1>Aptitude Test</h1>
+            <h1>Upload Excel File to Update Main File</h1>
         </div>
     </header>
+
     <div class="container">
-        <form method="post" enctype="multipart/form-data">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=True) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="message {{ category }}">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <!-- Excel Upload Form -->
+        <form action="/upload" method="POST" enctype="multipart/form-data">
             <h2>Upload Your Excel File</h2>
             <div class="form-group">
                 <label for="file">Choose Excel file (.xlsx):</label>
-                <input type="file" id="file" name="file" accept=".xlsx">
+                <input type="file" id="file" name="file" accept=".xlsx" required>
             </div>
-            
+            <button type="submit">Upload and Update</button>
+        </form>
+
+        <!-- Personal Information and Scores Form -->
+        <form method="post" enctype="multipart/form-data" style="margin-top: 30px;">
             <h2>Personal Information</h2>
 
             <div class="form-group">
@@ -93,10 +121,12 @@
                 <label for="name">Name:</label>
                 <input type="text" id="name" name="name" required>
             </div>
+
             <div class="form-group">
                 <label for="age">Age:</label>
                 <input type="number" id="age" name="age" required>
             </div>
+
             <div class="form-group">
                 <label for="gender">Gender:</label>
                 <select id="gender" name="gender" required>
@@ -112,22 +142,27 @@
                 <label for="Verbal Language">Verbal Language:</label>
                 <input type="number" id="Verbal Language" name="Verbal Language" step="0.01">
             </div>
+
             <div class="form-group">
                 <label for="Reading Comprehension">Reading Comprehension:</label>
                 <input type="number" id="Reading Comprehension" name="Reading Comprehension" step="0.01">
             </div>
+
             <div class="form-group">
                 <label for="English">English:</label>
                 <input type="number" id="English" name="English" step="0.01">
             </div>
+
             <div class="form-group">
                 <label for="Math">Math:</label>
                 <input type="number" id="Math" name="Math" step="0.01">
             </div>
+
             <div class="form-group">
                 <label for="Non Verbal">Non Verbal:</label>
                 <input type="number" id="Non Verbal" name="Non Verbal" step="0.01">
             </div>
+
             <div class="form-group">
                 <label for="Basic Computer">Basic Computer:</label>
                 <input type="number" id="Basic Computer" name="Basic Computer" step="0.01">
@@ -138,9 +173,11 @@
                 <strong>{{ error }}</strong>
             </div>
             {% endif %}
+
             <button type="submit">Submit</button>
         </form>
     </div>
+
     <footer class="footer">
         <p>&copy; 2024 Aptitude Test. All rights reserved.</p>
     </footer>
