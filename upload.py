@@ -1,13 +1,12 @@
-from flask import Flask, request, render_template, redirect, flash
+from flask import Blueprint, request, render_template, redirect, flash, current_app
 import pandas as pd
 import os
 
-app = Flask(__name__)
-app.secret_key = 'supersecretkey'  # Required for flash messages
+upload_bp = Blueprint('upload', __name__)
 
 MAIN_FILE = 'data/dataset.xlsx'
 
-@app.route('/', methods=['GET', 'POST'])
+@upload_bp.route('/upload', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
         # Check if a file was uploaded
@@ -51,8 +50,4 @@ def index():
 
         return redirect(request.url)
 
-    return render_template('index.html')
-
-if __name__ == '__main__':
-    app.run(debug=True)
-
+    return render_template('upload.html')  # Change this to the appropriate upload template
