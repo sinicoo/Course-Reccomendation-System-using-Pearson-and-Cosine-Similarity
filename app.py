@@ -1,7 +1,8 @@
-from flask import Flask, render_template, request, redirect, url_for ##Backup
+from flask import Flask, render_template, request, redirect, url_for
+from upload import upload_bp  # Import the upload blueprint
 import pandas as pd
 import numpy as np
-import json  # To store recommended courses as JSON
+import json
 import psycopg2
 import matplotlib.pyplot as plt
 import io
@@ -14,6 +15,8 @@ from sklearn.cluster import DBSCAN
 from sklearn.metrics import silhouette_score
 
 app = Flask(__name__)
+app.register_blueprint(upload_bp, url_prefix='/admin')  # Register blueprint
+app.secret_key = '12345aaa'
 
 # PostgreSQL configurations
 app.config['POSTGRES_HOST'] = 'dpg-cs7p98rv2p9s73f7et7g-a.oregon-postgres.render.com'
@@ -27,7 +30,7 @@ subjects = [
 ]
 
 # Load dataset
-file_path = 'dataset.xlsx'
+file_path = 'data/dataset.xlsx'
 sheets = pd.read_excel(file_path, sheet_name=None)
 
 def get_db_connection():
@@ -174,7 +177,7 @@ def results():
     student_scores = list(scores_result) if scores_result else [0] * 6
 
     # Load dataset from Excel for comparison
-    dataset = pd.read_excel('dataset.xlsx', sheet_name=None)
+    dataset = pd.read_excel('data/dataset.xlsx', sheet_name=None)
     all_data = pd.concat(dataset.values(), ignore_index=True)
 
     # Filter subjects for comparison
