@@ -10,10 +10,6 @@ MAIN_FILE = 'data/dataset.xlsx'
 def index():
     if request.method == 'POST':
         # Check if a file was uploaded
-        if 'file' not in request.files:
-            flash("No file part", "error")
-            return redirect(request.url)
-
         file = request.files['file']
         if file.filename == '':
             flash("No selected file", "error")
