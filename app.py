@@ -201,7 +201,7 @@ def results():
     ax.set_ylabel('Scores')
     ax.set_title('Comparison of User Scores with Dataset Average')
     ax.set_xticks(x)
-    ax.set_xticklabels(labels)
+    ax.set_xticklabels(labels, rotation=45, ha='right')
     ax.legend()
 
     # Save Bar Chart to Buffer
