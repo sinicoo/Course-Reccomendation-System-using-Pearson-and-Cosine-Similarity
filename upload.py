@@ -11,7 +11,7 @@ def index():
     if request.method == 'POST':
         # Check if a file was uploaded
         if 'file' not in request.files:
-            flash("No file part", "error")
+            flash("", "pass")
             return redirect(request.url)
 
         file = request.files['file']
