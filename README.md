@@ -36,7 +36,7 @@ The project includes visual representations and insights, making the recommendat
 
 - **Languages**: Python, HTML, CSS, JavaScript
 - **Libraries**: Flask, Pandas, Scikit-learn
-- **Database**: MySQL and PostgreSQL for storing user profiles and recommendation data
+- **Database**: PostgreSQL for storing user profiles and recommendation data
 
 ## Team Members
 
