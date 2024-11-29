@@ -14,7 +14,6 @@ The project includes visual representations and insights, making the recommendat
 ## Features
 
 - **Personalized Course Recommendations**: Uses Pearson and Cosine similarity to match students with suitable courses based on their scores.
-- **Likert Scale Inputs**: Collects user input through a structured Likert scale, making the process interactive and accurate.
 - **Evaluation Metrics**: Assessed with RMSE (Root Mean Square Error) and MAE (Mean Absolute Error) for accuracy.
 - **Intuitive User Interface**: Designed to be accessible and straightforward for high school students.
   
